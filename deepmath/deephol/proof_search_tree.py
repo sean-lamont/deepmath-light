@@ -27,8 +27,7 @@ from __future__ import print_function
 
 import collections
 import time
-
-import tensorflow as tf
+import logging
 from typing import List, Optional, Tuple, Text
 from deepmath.deephol.public import proof_assistant
 from deepmath.deephol import deephol_pb2
@@ -243,7 +242,7 @@ class TacticApplication(object):
     except error.StatusNotOk as exception:
       elapsed_msecs = int((time.time() - start_time) * 1000.0 + 0.5)
       self.time_spent = elapsed_msecs
-      tf.logging.info('Tactic application failed: %s with error %s',
+      logging.info('Tactic application failed: %s with error %s',
                       str(self.tactic), exception.message)
       self.result = deephol_pb2.TacticApplication.ERROR
       self.failed = True
@@ -259,7 +258,7 @@ class TacticApplication(object):
         raise exception
       return
     if response.HasField('error'):
-      tf.logging.info('Tactic application failed: %s, %s', str(request.tactic),
+      logging.info('Tactic application failed: %s, %s', str(request.tactic),
                       response.error)
       self.result = deephol_pb2.TacticApplication.ERROR
       self.failed = True
@@ -274,7 +273,7 @@ class TacticApplication(object):
       return t1.conclusion == t2.conclusion and t1.hypotheses == t2.hypotheses
 
     if len(new_subgoals) == 1 and is_same_expr(request.goal, new_subgoals[0]):
-      tf.logging.info('Tactic %s applied, but did not change subgoals.',
+      logging.info('Tactic %s applied, but did not change subgoals.',
                       request.tactic)
       self.result = deephol_pb2.TacticApplication.UNCHANGED
       self.failed = True
@@ -295,7 +294,7 @@ class TacticApplication(object):
     self.result = deephol_pb2.TacticApplication.SUCCESS
     # We don't know if some of the subgoals will fail or not.
     self.failed = False
-    tf.logging.info('Tactic %s successfully applied.', self.tactic)
+    logging.info('Tactic %s successfully applied.', self.tactic)
     successful_attempts.append(self)
     if not new_subgoals:
       assert self.update_closed()

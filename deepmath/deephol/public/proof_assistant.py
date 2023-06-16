@@ -5,7 +5,8 @@ from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
 import grpc
-import tensorflow as tf
+# import tensorflow as tf
+
 from deepmath.proof_assistant import proof_assistant_pb2
 from deepmath.proof_assistant import proof_assistant_pb2_grpc
 

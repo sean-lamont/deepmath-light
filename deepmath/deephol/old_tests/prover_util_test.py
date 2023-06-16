@@ -4,7 +4,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import unittest
+
+# import tensorflow as tf
+
+import logging
 
 from deepmath.deephol import action_generator
 from deepmath.deephol import proof_search_tree
@@ -62,10 +66,10 @@ MOCK_THEOREM = proof_assistant_pb2.Theorem(
 MOCK_PREMISE_SET = prover_util.make_premise_set(MOCK_THEOREM, 'default')
 
 
-class ProverUtilTest(tf.test.TestCase):
+class ProverUtilTest(unittest.TestCase):
 
   def setUp(self):
-    tf.logging.info('Setting up tree...')
+    logging.info('Setting up tree...')
     self.tree = proof_search_tree.ProofSearchTree(MOCK_WRAPPER, MOCK_THEOREM)
 
   def test_create_initial_tree(self):
@@ -267,4 +271,4 @@ class ProverUtilTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+  unittest.main()

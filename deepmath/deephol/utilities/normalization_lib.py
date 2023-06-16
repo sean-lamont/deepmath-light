@@ -6,7 +6,8 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
-import tensorflow as tf
+# import tensorflow as tf
+import logging
 from typing import Callable, List, Text
 from deepmath.deephol import theorem_fingerprint
 from deepmath.deephol.utilities import sexpression_graphs as sexpr
@@ -203,7 +204,7 @@ def deduplicate_modulo_normalization(db: proof_assistant_pb2.TheoremDatabase
       seen.add(nf)
       new_thm_db.theorems.extend([t])
       assert normalized_fingerprint(new_thm_db.theorems[-1]) == nf
-  tf.logging.info(
+  logging.info(
       'Removed %d duplicates of %d theorems; keeping earliest occurrence only.',
       num_duplicates, len(collisions))
   return new_thm_db

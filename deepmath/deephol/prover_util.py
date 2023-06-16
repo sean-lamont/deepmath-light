@@ -9,7 +9,8 @@ from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
 import time
-import tensorflow as tf
+# import tensorflow as tf
+import logging
 from typing import Iterable, Iterator, List, Optional, Text
 from google.protobuf import text_format
 from deepmath.deephol import action_generator, deephol_pb2
@@ -155,13 +156,13 @@ def try_tactics(node: proof_search_tree.ProofSearchNode, max_tries: int,
   suggestion_scores = action_gen.step(node, premise_set)
   node.action_generation_time_millisec = int(
       round(1000.0 * (time.time() - start_time)))
-  tf.logging.info('Suggestions and scores: %s', str(suggestion_scores))
+  logging.info('Suggestions and scores: %s', str(suggestion_scores))
   if not suggestion_scores:
     return 0
   top_suggestions = sorted(suggestion_scores, key=lambda x: x[1], reverse=True)
   request = proof_assistant_pb2.ApplyTacticRequest(
       goal=theorem_to_goal_proto(node.goal), timeout_ms=tactic_timeout_ms)
-  tf.logging.info('Attempting to apply tactics: %s', str(top_suggestions))
+  logging.info('Attempting to apply tactics: %s', str(top_suggestions))
   node.processed = True
   while (
       top_suggestions and
@@ -198,7 +199,7 @@ def translate_splits(splits: str):
       return proof_assistant_pb2.Theorem.TRAINING
     elif s == 'validation':
       return proof_assistant_pb2.Theorem.VALIDATION
-    tf.logging.fatal('Unknown split specification: %s', s)
+    logging.fatal('Unknown split specification: %s', s)
 
   if splits == 'all':
     return translate_splits('training,testing,validation')
@@ -310,7 +311,7 @@ class ProverTaskGenerator(object):
     self.count_logs += 1
     top_theorem = proof_log.theorem_in_database
     if top_theorem is None:
-      tf.logging.fatal(text_format.MessageToString(proof_log))
+      logging.fatal(text_format.MessageToString(proof_log))
       self.emit_error('Top level theorem is not found in the proof_log.')
       return
     database_theorem = self.fingerprint_to_theorem.get(
@@ -384,10 +385,10 @@ class ProverTaskGenerator(object):
     self.count_dupes = 0
     for proof_log in proof_log_iterator:
       if verbosity and self.count_logs % verbosity == 0:
-        tf.logging.info('Log %d errors: %d', self.count_logs, len(self.errors))
-        tf.logging.info('Stats:\n%s', self.node_stats())
+        logging.info('Log %d errors: %d', self.count_logs, len(self.errors))
+        logging.info('Stats:\n%s', self.node_stats())
         if self.errors:
-          tf.logging.info('Errors:\n%s', self.error_report())
+          logging.info('Errors:\n%s', self.error_report())
       for task in self.create_tasks(proof_log):
         if dedupe:
           assert len(task.goals) == 1
@@ -452,14 +453,14 @@ def get_task_list(prover_tasks_file: Optional[str],
     List of tasks extracted.
   """
   if prover_tasks_file:
-    tf.logging.info('Loading tasks from tasks file "%s".', prover_tasks_file)
+    logging.info('Loading tasks from tasks file "%s".', prover_tasks_file)
     return [
         task for task in io_util.read_protos(prover_tasks_file,
                                              proof_assistant_pb2.ProverTask)
         if is_thm_included(task.goals[0], splits, library_tags)
     ]
   elif prover_task_list_file:
-    tf.logging.info('Loading tasks from task list file "%s".',
+    logging.info('Loading tasks from task list file "%s".',
                     prover_tasks_file)
     task_list = io_util.load_text_proto(prover_task_list_file,
                                         proof_assistant_pb2.ProverTaskList,
@@ -470,9 +471,9 @@ def get_task_list(prover_tasks_file: Optional[str],
     ]
   elif tasks_by_fingerprint:
     if not theorem_db:
-      tf.logging.fatal('Require a theorem database to create prover tasks from '
+      logging.fatal('Require a theorem database to create prover tasks from '
                        'fingerprints.')
-    tf.logging.info('Generating task list for fingerprint(s) %s',
+    logging.info('Generating task list for fingerprint(s) %s',
                     tasks_by_fingerprint)
     fingerprints = set([int(fp) for fp in tasks_by_fingerprint.split(',')])
     theorems = []
@@ -482,11 +483,11 @@ def get_task_list(prover_tasks_file: Optional[str],
         fingerprints.remove(fingerprint)
         theorems.append(thm)
     if fingerprints:
-      tf.logging.error('Some fingerprints could not be found in theorem db: %s',
+      logging.error('Some fingerprints could not be found in theorem db: %s',
                        str(fingerprints))
     return [
         make_prover_task_for_goal(thm, thm, theorem_db.name) for thm in theorems
     ]
   else:
-    tf.logging.info('Generating task list for theorem database.')
+    logging.info('Generating task list for theorem database.')
     return create_tasks_for_theorem_db(theorem_db, splits, library_tags)

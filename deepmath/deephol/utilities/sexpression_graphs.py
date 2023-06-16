@@ -7,7 +7,8 @@ from __future__ import print_function
 
 import farmhash
 import six
-import tensorflow as tf
+# import tensorflow as tf
+import logging
 from typing import Dict, Iterable, List, NewType, Optional, Set, Text
 from typing import Union
 from deepmath.deephol.utilities import sexpression_parser
@@ -92,7 +93,7 @@ class SExpressionGraph(object):
     """Add new nodes to the S-expression graph."""
     if sexp in self:
       if self.to_text(to_node_id(sexp)) != sexp:
-        tf.logging.fatal('Fingerprint collision in S-expression graph parser.')
+        logging.fatal('Fingerprint collision in S-expression graph parser.')
       return
     children = sexpression_parser.children(sexp)
     node_id = to_node_id(sexp)

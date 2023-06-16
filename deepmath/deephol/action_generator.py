@@ -11,7 +11,7 @@ from __future__ import print_function
 import collections
 import numpy as np
 import scipy
-import tensorflow as tf
+import logging
 from typing import List, Tuple, Optional, Text
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol import embedding_store
@@ -64,13 +64,13 @@ class SimilarityScorer(object):
     freq_sum = sum(self.freq)
     self.inv_freq = np.array([1.0 / float(f) for f in self.freq])
 
-    tf.logging.info('Vocab size: %d', self.num_words)
-    tf.logging.info('Frequency sum: %d', freq_sum)
+    logging.info('Vocab size: %d', self.num_words)
+    logging.info('Frequency sum: %d', freq_sum)
     self.reset_word_weights()
 
   def reset_word_weights(self):
     """Reset word weights, and recompute premise_vectors."""
-    tf.logging.info('Resetting word weights')
+    logging.info('Resetting word weights')
     self.word_weights = np.multiply(
         self.inv_freq,
         np.absolute(
@@ -187,13 +187,13 @@ class ActionGenerator(object):
       ])
     else:
       thms_emb = np.empty([0])
-    tf.logging.debug(thms_emb)
+    logging.debug(thms_emb)
     if len(thms_emb):  # pylint: disable=g-explicit-length-test
       thm_scores = self.predictor.batch_thm_scores(proof_state_enc, thms_emb,
                                                    tactic_id)
     else:
       thm_scores = []
-    tf.logging.debug(thm_scores)
+    logging.debug(thm_scores)
     return thm_scores
 
   def _compute_tactic_scores(self, proof_state_encoded):
@@ -232,7 +232,7 @@ class ActionGenerator(object):
         'cosine').reshape(-1).tolist()
     ranked_closest = sorted(zip(distance_scores, self.thm_names))
     ranked_closest = ranked_closest[:MAX_CLOSEST]
-    tf.logging.info(
+    logging.info(
         'Cosine closest in premise embedding space:\n%s', '\n'.join(
             ['%s: %.6f' % (name, score) for score, name in ranked_closest]))
     # add some noise to top few and rerank
@@ -291,13 +291,13 @@ class ActionGenerator(object):
     assert theorem_fingerprint.Fingerprint(
         self.theorem_database.theorems[thm_number]) == fp
     thm_names = self.thm_names[:thm_number]
-    tf.logging.debug(thm_names)
+    logging.debug(thm_names)
     # TODO(smloos): update predictor api to accept theorems directly
     proof_state = predictions.ProofState(
         goal=str(normalization_lib.normalize(node.goal).conclusion))
     proof_state_emb = self.predictor.proof_state_embedding(proof_state)
     proof_state_enc = self.predictor.proof_state_encoding(proof_state_emb)
-    tf.logging.debug(proof_state_enc)
+    logging.debug(proof_state_enc)
     tactic_scores = self._compute_tactic_scores(proof_state_enc)
 
     empty_emb = self.predictor.thm_embedding('')
@@ -313,7 +313,7 @@ class ActionGenerator(object):
 
     ranked_closest = self.compute_closest(node.goal, thm_number)
     if ranked_closest:
-      tf.logging.info(
+      logging.info(
           'Cosine closest picked:\n%s', '\n'.join(
               ['%s: %.6f' % (name, score) for score, name in ranked_closest]))
 
@@ -326,10 +326,10 @@ class ActionGenerator(object):
           deephol_pb2.ProverOptions.PARAMETERS_CONDITIONED_ON_TAC):
         thm_scores = self._get_theorem_scores(proof_state_enc, thm_number,
                                               tactic_id)
-        tf.logging.debug(thm_scores)
+        logging.debug(thm_scores)
         no_params_score = self.predictor.batch_thm_scores(
             proof_state_enc, empty_emb_batch, tactic_id)[0]
-        tf.logging.info('Theorem score for empty theorem: %f0.2',
+        logging.info('Theorem score for empty theorem: %f0.2',
                         no_params_score)
 
       thm_ranked = sorted(
@@ -338,7 +338,7 @@ class ActionGenerator(object):
       pass_no_arguments = thm_ranked[-1][0] < no_params_score
       thm_ranked = self.add_similar(thm_ranked, ranked_closest)
 
-      tf.logging.info('thm_ranked: %s', str(thm_ranked))
+      logging.info('thm_ranked: %s', str(thm_ranked))
       tactic_str = str(tactic.name)
       try:
         tactic_params = _compute_parameter_string(
@@ -349,7 +349,7 @@ class ActionGenerator(object):
                   string=tactic_str + params_str,
                   score=tactic_scores[tactic_id]))
       except ValueError as e:
-        tf.logging.warning('Failed to compute parameters for tactic %s: %s',
+        logging.warning('Failed to compute parameters for tactic %s: %s',
                            tactic.name, str(e))
     return ret
 

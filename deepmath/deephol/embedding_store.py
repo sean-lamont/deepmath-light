@@ -11,12 +11,14 @@ from __future__ import division
 from __future__ import print_function
 import os
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 from typing import List, Optional, Text
 from deepmath.deephol import io_util
 from deepmath.deephol import predictions
 from deepmath.deephol.utilities import normalization_lib
 from deepmath.proof_assistant import proof_assistant_pb2
+
+import logging
 
 
 class TheoremEmbeddingStore(object):
@@ -65,7 +67,7 @@ class TheoremEmbeddingStore(object):
     Args:
       file_path: Path to the text protobuf file containing the theorem database.
     """
-    tf.logging.info('Reading theorems database from "%s"', file_path)
+    logging.info('Reading theorems database from "%s"', file_path)
     theorem_database = io_util.load_theorem_database_from_file(file_path)
     self.compute_embeddings_for_thms_from_db(theorem_database)
 
@@ -75,8 +77,8 @@ class TheoremEmbeddingStore(object):
     Args:
       file_path: Path to the file in which the embeddings are stored.
     """
-    tf.logging.info('Reading embeddings from "%s"', file_path)
-    with tf.gfile.Open(file_path, 'rb') as f:
+    logging.info('Reading embeddings from "%s"', file_path)
+    with open(file_path, 'rb') as f:
       self.thm_embeddings = np.load(f)
 
   def save_embeddings(self, file_path: Text):
@@ -87,11 +89,13 @@ class TheoremEmbeddingStore(object):
         The directory and all parent directories are created if necessary.
     """
     dir_name = os.path.dirname(file_path)
-    tf.logging.info('Writing embeddings "%s"', file_path)
-    if not tf.gfile.Exists(dir_name):
-      tf.gfile.MakeDirs(dir_name)
-      assert tf.gfile.Exists(dir_name)
-    with tf.gfile.Open(file_path, 'wb') as f:
+    logging.info('Writing embeddings "%s"', file_path)
+
+    if not os.path.exists(dir_name):
+      os.mkdirs(dir_name)
+      assert os.path.exists(dir_name)
+
+    with open(file_path, 'wb') as f:
       np.save(f, self.thm_embeddings)
 
   def get_embeddings_for_preceding_thms(self, thm_index):
