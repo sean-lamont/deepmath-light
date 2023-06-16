@@ -20,7 +20,7 @@ from deepmath.proof_assistant import proof_assistant_pb2
 
 def _process_tactics_and_replacements(tactics_info: deephol_pb2.TacticsInfo,
                                       replacements: deephol_pb2.TacticsInfo
-                                     ) -> List[deephol_pb2.Tactic]:
+                                      ) -> List[deephol_pb2.Tactic]:
   """Check tactics are in order, have no gap in id, and apply replacements."""
   bad_ids = [(i, tactic.id)
              for i, tactic in enumerate(tactics_info.tactics)

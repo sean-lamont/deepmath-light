@@ -23,4 +23,21 @@ Should be able to try and reuse as much as possible from framework. Problems lie
 - Need to reimplement readers, writers and checkpointing for Apache Beam...
 
 
-## 
+## Misc
+
+- gRPC done for Apache Beam? 
+
+
+## gRPC install/process
+
+- pip install grpc-tools
+- from root (deepmath-light) dir:
+  - python -m grpc_tools.protoc -I=. --python_out=. ./deepmath/deephol/deephol.proto
+  - python -m grpc_tools.protoc -I=. --python_out=. ./deepmath/proof_assistant/proof_assistant.proto --grpc_python_out=.
+
+## Run HOL light server
+
+- Go to HOL light repo then run:
+
+  - sudo docker build . (returns container_id e.g. 8a85414b942e)
+  - sudo docker run -d -p 2000:2000 --name=holist container_id

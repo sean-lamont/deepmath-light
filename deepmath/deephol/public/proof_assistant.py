@@ -9,11 +9,15 @@ import tensorflow as tf
 from deepmath.proof_assistant import proof_assistant_pb2
 from deepmath.proof_assistant import proof_assistant_pb2_grpc
 
-tf.flags.DEFINE_string(
-    'proof_assistant_server_address', 'localhost:2000',
-    'address (including port) of the proof assistant server')
+# tf.flags.DEFINE_string(
+#     'proof_assistant_server_address', 'localhost:2000',
+#     'address (including port) of the proof assistant server')
+#
+# FLAGS = tf.flags.FLAGS
 
-FLAGS = tf.flags.FLAGS
+
+# address (including port) of the proof assistant server
+proof_assistant_server_address = 'localhost:2000'
 
 GIGABYTE = 1024 * 1024 * 1024
 GRPC_MAX_MESSAGE_LENGTH = GIGABYTE
@@ -24,7 +28,7 @@ class ProofAssistant(object):
 
   def __init__(self):
     self.channel = grpc.insecure_channel(
-        FLAGS.proof_assistant_server_address,
+        proof_assistant_server_address,
         options=[('grpc.max_send_message_length', GRPC_MAX_MESSAGE_LENGTH),
                  ('grpc.max_receive_message_length', GRPC_MAX_MESSAGE_LENGTH)])
     self.stub = proof_assistant_pb2_grpc.ProofAssistantServiceStub(self.channel)

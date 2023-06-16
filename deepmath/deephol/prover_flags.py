@@ -13,7 +13,8 @@ from deepmath.deephol import io_util
 from deepmath.deephol import prover_util
 from deepmath.proof_assistant import proof_assistant_pb2
 
-FLAGS = tf.flags.FLAGS
+# FLAGS = tf.flags.FLAGS
+
 HIST_AVG = deephol_pb2.ProverOptions.HIST_AVG
 HIST_CONV = deephol_pb2.ProverOptions.HIST_CONV
 HIST_ATT = deephol_pb2.ProverOptions.HIST_ATT
@@ -22,6 +23,7 @@ HIST_ATT = deephol_pb2.ProverOptions.HIST_ATT
 # prover_options, should they be defined.
 # This is a required parameter. The prover will fail if it is not provided
 # with prover_options.
+
 tf.flags.DEFINE_string(
     'prover_options', None,
     'Required: path to file containing the ProverOptions proto')
@@ -110,14 +112,18 @@ def get_prover_options(prover_round_tag='manual',
     tf.logging.fatal('Required prover options file "%s" does not exist.',
                      FLAGS.prover_options)
   prover_options = deephol_pb2.ProverOptions()
+
   if FLAGS.max_theorem_parameters is not None:
-    tf.logging.warning(
+
+    logging.warning(
         'Overring max_theorem_parameters in prover options to %d.',
         FLAGS.max_theorem_parameters)
     prover_options.action_generator_options.max_theorem_parameters = (
         FLAGS.max_theorem_parameters)
+
   with tf.gfile.Open(FLAGS.prover_options) as f:
     text_format.MergeLines(f, prover_options)
+
   if prover_options.builtin_library:
     tf.logging.warning('builtin_library is deprecated. Do not provide.')
     if str(prover_options.builtin_library) not in ['core']:

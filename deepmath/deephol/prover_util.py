@@ -12,8 +12,7 @@ import time
 import tensorflow as tf
 from typing import Iterable, Iterator, List, Optional, Text
 from google.protobuf import text_format
-from deepmath.deephol import action_generator
-from deepmath.deephol import deephol_pb2
+from deepmath.deephol import action_generator, deephol_pb2
 from deepmath.deephol import io_util
 from deepmath.deephol import proof_search_tree
 from deepmath.deephol import theorem_fingerprint
@@ -404,7 +403,7 @@ class ProverTaskGenerator(object):
                        proof_log_iterator: Iterable[deephol_pb2.ProofLog],
                        dedupe: bool = True,
                        verbosity: int = 1000
-                      ) -> proof_assistant_pb2.ProverTaskList:
+                       ) -> proof_assistant_pb2.ProverTaskList:
     """Iterate over proof logs to create an optionally deduplicated task list.
 
     This method iterates over proof logs, generates tasks, dedupes them

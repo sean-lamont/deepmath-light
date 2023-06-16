@@ -20,6 +20,7 @@ from deepmath.deephol import theorem_fingerprint
 from deepmath.proof_assistant import proof_assistant_pb2
 
 FLAGS = flags.FLAGS
+
 PREDICTIONS_MODEL_PREFIX = test_util.test_src_dir_path(
     'deephol/test_data/default_ckpt/model.ckpt-0')
 HOLLIGHT_TACTICS_TEXTPB_PATH = test_util.test_src_dir_path(

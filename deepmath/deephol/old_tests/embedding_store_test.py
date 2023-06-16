@@ -6,15 +6,15 @@ from __future__ import print_function
 import os
 import tempfile
 
-from absl import flags
-from absl.testing import parameterized
+# from absl import flags
+# from absl.testing import parameterized
 import numpy as np
 import tensorflow as tf
 
 from deepmath.deephol import embedding_store
 from deepmath.deephol import io_util
 from deepmath.deephol import mock_predictions_lib
-from deepmath.deephol import test_util
+from deepmath.deephol.old_tests import test_util
 from deepmath.deephol.utilities import normalization_lib
 from deepmath.proof_assistant import proof_assistant_pb2
 

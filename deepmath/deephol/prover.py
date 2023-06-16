@@ -1,18 +1,20 @@
 """DeepHOL prover."""
 
+#todo gfile
+
+import logging
 from __future__ import absolute_import
 from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
 import random
 import time
-import tensorflow as tf
+# import tensorflow as tf
 from typing import Optional, Text
 from google.protobuf import text_format
 # Import predictors.
 from deepmath.deephol.public import proof_assistant
-from deepmath.deephol import action_generator
-from deepmath.deephol import deephol_pb2
+from deepmath.deephol import action_generator, deephol_pb2
 from deepmath.deephol import embedding_store
 from deepmath.deephol import holparam_predictor
 from deepmath.deephol import io_util
@@ -89,7 +91,9 @@ class Prover(object):
 
   def __init__(self, prover_options, hol_wrapper, theorem_db, single_goal=True):
     if not single_goal:
-      tf.logging.fatal('Only one goal per task is supported')
+      # tf.logging.fatal('Only one goal per task is supported')
+      logging.fatal('Only one goal per task is supported')
+
     self.prover_options = prover_options
     self.hol_wrapper = hol_wrapper
     self.accept_tasks = True
@@ -126,7 +130,8 @@ class Prover(object):
   def prove(self, task: proof_assistant_pb2.ProverTask) -> deephol_pb2.ProofLog:
     """Top level prove method."""
     if not self.single_goal:
-      tf.logging.fatal('Only one goal per task is supported')
+      # tf.logging.fatal('Only one goal per task is supported')
+      logging.fatal('Only one goal per task is supported')
     return self.prove_one_wrapper(task)
 
   def prove_one_wrapper(self, task: proof_assistant_pb2.ProverTask
@@ -146,7 +151,8 @@ class Prover(object):
     _sample_bfs_options(self.prover_options)
     log = check_task(task, self.prover_options)
     if log is not None:
-      tf.logging.info('Task did not fit the prover.')
+      # tf.logging.info('Task did not fit the prover.')
+      logging.info('Task did not fit the prover.')
       return log
     goal_thm = task.goals[0]
     tree = proof_search_tree.ProofSearchTree(self.hol_wrapper, goal_thm)
@@ -154,17 +160,28 @@ class Prover(object):
     if self.accept_tasks:
       try:
         self.start_time = time.time()
-        tf.logging.info('Attempting task %s.',
+        # tf.logging.info('Attempting task %s.',
+        #                 text_format.MessageToString(task))
+
+        logging.info('Attempting task %s.',
                         text_format.MessageToString(task))
+
         error_message = self.prove_one(tree, task)
       except error.StatusNotOk as exception:
-        tf.logging.error('Prover stopped accepting tasks due to "%s"',
+        # tf.logging.error('Prover stopped accepting tasks due to "%s"',
+        #                  exception.message)
+
+        logging.error('Prover stopped accepting tasks due to "%s"',
                          exception.message)
+
         self.error = exception.message
         error_message = exception.message
         self.accept_tasks = False
     else:
-      tf.logging.warning('Prover does not accept tasks anymore.')
+      # tf.logging.warning('Prover does not accept tasks anymore.')
+
+      logging.warning('Prover does not accept tasks anymore.')
+
       error_message = 'Prover stopped accepting tasks due to %s.' % self.error
     proof_log = tree.to_proto()
     if not self.accept_tasks:
@@ -177,7 +194,10 @@ class Prover(object):
       proof_log.error_message = error_message or 'No proof.'
     proof_log.prover_options.CopyFrom(self.prover_options)
     proof_log.prover_task.CopyFrom(task)
-    tf.logging.info('Pruning theorem nodes...')
+    # tf.logging.info('Pruning theorem nodes...')
+
+    logging.info('Pruning theorem nodes...')
+
     if self.pruner is not None:
       for node in proof_log.nodes:
         if node.status == deephol_pb2.ProofNode.PROVED:
@@ -224,10 +244,13 @@ class NoBacktrackProver(Prover):
                 'limit %d' % budget)
       else:
         if len(node.successful_attempts) != 1:
-          tf.logging.info('%d successful attempts.',
+          logging.info('%d successful attempts.',
                           len(node.successful_attempts))
+
           for tac_app in node.successful_attempts:
-            tf.logging.info('attempt: %s', tac_app.tactic)
+
+            logging.info('attempt: %s', tac_app.tactic)
+
         assert len(node.successful_attempts) == 1
         budget -= len(node.failed_attempts) + 1
     if not root.closed:
@@ -285,7 +308,7 @@ class BFSProver(Prover):
     root_status = ' '.join([
         p[0] for p in [('closed', root.closed), ('failed', root.failed)] if p[1]
     ])
-    tf.logging.info('Timeout: %s root status: %s explored: %d',
+    logging.info('Timeout: %s root status: %s explored: %d',
                     str(self.timed_out()), root_status, nodes_explored)
     if self.timed_out():
       return 'BFS: Timeout.'
@@ -321,7 +344,7 @@ def get_predictor(options: deephol_pb2.ProverOptions
 def cache_embeddings(options: deephol_pb2.ProverOptions):
   emb_path = str(options.theorem_embeddings)
   if options.HasField('theorem_embeddings') and not tf.gfile.Exists(emb_path):
-    tf.logging.info(
+    logging.info(
         'theorem_embeddings file "%s" does not exist, computing & saving.',
         emb_path)
     emb_store = embedding_store.TheoremEmbeddingStore(get_predictor(options))
@@ -337,7 +360,7 @@ def create_prover(options: deephol_pb2.ProverOptions) -> Prover:
   tactics = io_util.load_tactics_from_file(
       str(options.path_tactics), str(options.path_tactics_replace))
   if options.action_generator_options.asm_meson_no_params_only:
-    tf.logging.warn('Note: Using Meson action generator with no parameters.')
+    logging.warn('Note: Using Meson action generator with no parameters.')
     action_gen = action_generator.MesonActionGenerator()
   else:
     predictor = get_predictor(options)
@@ -350,7 +373,7 @@ def create_prover(options: deephol_pb2.ProverOptions) -> Prover:
         theorem_database, tactics, predictor, options.action_generator_options,
         options.model_architecture, emb_store)
   hol_wrapper = setup_prover(theorem_database)
-  tf.logging.info('DeepHOL dependencies initialization complete.')
+  logging.info('DeepHOL dependencies initialization complete.')
   if options.prover == 'bfs':
     return BFSProver(options, hol_wrapper, action_gen, theorem_database)
   return NoBacktrackProver(options, hol_wrapper, action_gen, theorem_database)
@@ -358,13 +381,13 @@ def create_prover(options: deephol_pb2.ProverOptions) -> Prover:
 
 def setup_prover(theorem_database: proof_assistant_pb2.TheoremDatabase):
   """Starts up HOL and seeds it with given TheoremDatabase."""
-  tf.logging.info('Setting up and registering theorems with proof assistant...')
+  logging.info('Setting up and registering theorems with proof assistant...')
   proof_assistant_obj = proof_assistant.ProofAssistant()
   for thm in theorem_database.theorems:
     response = proof_assistant_obj.RegisterTheorem(
         proof_assistant_pb2.RegisterTheoremRequest(theorem=thm))
     if response.HasField('error_msg') and response.error_msg:
-      tf.logging.fatal('Registration failed for %d with: %s' %
+      logging.fatal('Registration failed for %d with: %s' %
                        (response.fingerprint, response.error_msg))
-  tf.logging.info('Proof assistant setup done.')
+  logging.info('Proof assistant setup done.')
   return proof_assistant_obj
