@@ -10,7 +10,7 @@ from __future__ import division
 from __future__ import print_function
 import re
 
-import tensorflow as tf
+# import tensorflow as tf
 from typing import List, Optional, Text
 from google.protobuf import text_format
 from deepmath.deephol import deephol_pb2
