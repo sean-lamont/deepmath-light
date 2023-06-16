@@ -1,11 +1,13 @@
 """Tests for deepmath.prover.hol_light.theorem_fingerprint."""
 
-import tensorflow as tf
+# import tensorflow as tf
 from deepmath.deephol import theorem_fingerprint
 from deepmath.proof_assistant import proof_assistant_pb2
 
+import unittest
 
-class TheoremFingerprintTest(tf.test.TestCase):
+
+class TheoremFingerprintTest(unittest.TestCase):
 
   def testStableFingerprint(self):
     """Tests that the theorem fingerprint function is stable."""
@@ -18,4 +20,4 @@ class TheoremFingerprintTest(tf.test.TestCase):
 
 
 if __name__ == "__main__":
-  tf.test.main()
+    unittest.main()
