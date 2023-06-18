@@ -1,17 +1,12 @@
-# Deepmath
+# Deepmath Light
 
-The Deepmath project seeks to improve automated theorem proving using deep
-learning and other machine learning techniques.  Deepmath is a collaboration
-between [Google Research](https://research.google.com) and several universities.
+This repository is intended to be a lightweight version of the original deepmath/deephol 
+source. The original project has several dependencies which can make it difficult to set up the 
+environment locally. It is also written in TensorFlow 1, which further complicates a smooth integration with modern tools.
 
-## DISCLAIMER:
+As a result, this was written with the goal of maintaining the core functionality of the original
+framework, while being as simple as possible to get running. TensorFlow dependencies are kept to a minimum, with python builtins
+used where possible (in particular, file I/O, logging and tests are now written with standard library functions such as the unittest and logging libraries). 
+This was done to reduce the dependence on a particular ML framework.  
 
-The source code in this repository is not an official Google product, but
-is a research collaboration with external research teams.
-
-## Installation
-
-Deepmath depends on TensorFlow, which is included as a submodule.  Use, or
-see, the Dockerfile for build instructions for `deephol`, our neural prover. It
-requires connecting to a proof assistant server. See
-https://github.com/brain-research/hol-light for a server implementation.
+The learning algorithms are implemented in PyTorch instead of TensorFlow, however they are made as modular as possible to facilitate alternatives with e.g. TF 2.0, JAX etc. 

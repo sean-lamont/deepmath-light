@@ -164,13 +164,16 @@ def try_tactics(node: proof_search_tree.ProofSearchNode, max_tries: int,
       goal=theorem_to_goal_proto(node.goal), timeout_ms=tactic_timeout_ms)
   logging.info('Attempting to apply tactics: %s', str(top_suggestions))
   node.processed = True
+
   while (
       top_suggestions and
       (len(node.successful_attempts) < min_successes or
        (len(node.successful_attempts) + len(node.failed_attempts) <= max_tries))
       and (len(node.successful_attempts) < max_successes)):
+
     top_suggestion, score = top_suggestions.pop(0)
     request.tactic = top_suggestion
+
     proof_search_tree.TacticApplication(node, node.successful_attempts,
                                         node.failed_attempts, node.tree,
                                         request, score)

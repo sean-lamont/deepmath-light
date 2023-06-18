@@ -17,6 +17,8 @@ from typing import NamedTuple
 from typing import Optional
 from typing import Text
 
+#todo change to torch, or add separate predictor with torch tensor functionality?
+
 # Numpy arrays do not support type checking for arrays with different shapes.
 # [goal_emb_size] float32
 GOAL_EMB_TYPE = np.ndarray

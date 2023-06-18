@@ -381,6 +381,7 @@ class ProofSearchNode(object):
                index: int,
                goal: proof_assistant_pb2.Theorem,
                parent: Optional[SubGoalRef] = None):
+
     """Constructor for a Node within proof search.
 
     Each node represents a goal or subgoal with one or multiple proof attempts.
@@ -395,6 +396,7 @@ class ProofSearchNode(object):
         of the search tree. Otherwise it must be a SubGoalRef referring to the
         tactic application that created the proof search node.
     """
+
     self.tree = tree
     self.goal = goal
     if not self.goal.fingerprint:

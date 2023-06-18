@@ -11,10 +11,11 @@ import os
 from absl import flags
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
+import unittest
 from deepmath.deephol import holparam_predictor
-from deepmath.deephol import predictions_abstract_base_test
-from deepmath.deephol import test_util
+from deepmath.deephol.old_tests import predictions_abstract_base_test
+from deepmath.deephol.old_tests import test_util
 
 FLAGS = flags.FLAGS
 NUM_TACTICS = 41
@@ -104,4 +105,4 @@ class TacticDependentPredictorTest(
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    unittest.main()
