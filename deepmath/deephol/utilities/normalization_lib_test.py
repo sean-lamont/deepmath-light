@@ -5,10 +5,11 @@ from __future__ import division
 from __future__ import print_function
 
 from absl.testing import parameterized
-import tensorflow as tf
+# import tensorflow as tf
 from deepmath.deephol.utilities import normalization_lib
 from deepmath.proof_assistant import proof_assistant_pb2
 
+import unittest
 
 class NormalizedFingerprintLibTest(parameterized.TestCase):
 
@@ -386,4 +387,4 @@ class NormalizedFingerprintLibTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    unittest.main()

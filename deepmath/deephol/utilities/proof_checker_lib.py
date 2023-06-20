@@ -8,7 +8,8 @@ from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
 
-import tensorflow as tf
+# import tensorflow as tf
+import logging
 from typing import Dict, Iterable, List, Text
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol.utilities import proof_analysis
@@ -114,7 +115,7 @@ def proof_linearization(proof_log: deephol_pb2.ProofLog
     if not proofnode.proofs:
       raise ProofFailedError('No tactic app found for goal %s' % str(goal))
     if len(proofnode.proofs) > 1:
-      tf.logging.warning('Multiple proofs detected for goal; ignoring all but '
+      logging.warning('Multiple proofs detected for goal; ignoring all but '
                          'the first one.')
     tactic_application = proofnode.proofs[0]  # only checking the first one
     tactics.append(tactic_application)
@@ -223,7 +224,7 @@ def verify(proof_logs: Iterable[deephol_pb2.ProofLog],
     # Start the actual loop logic
     fingerprint = theorem_fingerprint.Fingerprint(log.theorem_in_database)
     if fingerprint in proof_logs_dict:
-      tf.logging.warning(
+      logging.warning(
           'Can generate at most one OCaml proof per theorem. '
           'Dectected an additional proof for fingerprint %d.\n\n%s',
           fingerprint, str(log.nodes[0].goal))
@@ -254,34 +255,34 @@ def verify(proof_logs: Iterable[deephol_pb2.ProofLog],
       lines.extend(ocaml_proof(extracted))
       successful_proofs += 1
     except ProofFailedError as e:
-      tf.logging.error('Proof of %s failed: %s',
+      logging.error('Proof of %s failed: %s',
                        theorem_fingerprint.ToTacticArgument(theorem), str(e))
       failed_proofs += 1
 
   # Detailed stats
-  tf.logging.info('PROOF LOG STATS')
-  tf.logging.info('Proof logs processed: %d', proof_logs_processed)
-  tf.logging.info('Proof logs without proofs: %d', proof_logs_without_proof)
-  tf.logging.info('Proof logs with closed proofs: %d',
+  logging.info('PROOF LOG STATS')
+  logging.info('Proof logs processed: %d', proof_logs_processed)
+  logging.info('Proof logs without proofs: %d', proof_logs_without_proof)
+  logging.info('Proof logs with closed proofs: %d',
                   proof_logs_with_closed_proofs)
 
-  tf.logging.info('PROOF STATS')
-  tf.logging.info('Successful proofs: %d', successful_proofs)
-  tf.logging.info('Missing proofs: %d', missing_proofs)
-  tf.logging.info('Failed proofs: %d', failed_proofs)
-  tf.logging.info('Theorems with proofs in proof logs: %d',
+  logging.info('PROOF STATS')
+  logging.info('Successful proofs: %d', successful_proofs)
+  logging.info('Missing proofs: %d', missing_proofs)
+  logging.info('Failed proofs: %d', failed_proofs)
+  logging.info('Theorems with proofs in proof logs: %d',
                   theorems_with_closed_proofs)
   if duplicate_proofs:
-    tf.logging.warning('Proofs in proof logs that were ignored: %d',
+    logging.warning('Proofs in proof logs that were ignored: %d',
                        duplicate_proofs)
   if missing_in_database:
-    tf.logging.warning(
+    logging.warning(
         'Found a proof for a theorem that is not in the theorem database',
         missing_in_database)
   if successful_proofs + failed_proofs != theorems_with_closed_proofs:
     raise ValueError('Internal error in the proof checker. Number of theorems '
                      'checked did not match the proof log.')
   if successful_proofs < theorems_with_closed_proofs or failed_proofs > 0:
-    tf.logging.warning('Proof log could NOT be verified.')
+    logging.warning('Proof log could NOT be verified.')
 
   return '\n'.join(lines)

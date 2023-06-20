@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import os
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 
 from typing import List
 from typing import Optional
@@ -14,7 +14,7 @@ from typing import Text
 
 from deepmath.deephol import predictions
 from deepmath.deephol import process_sexp
-from tensorflow.core.protobuf import saved_model_pb2
+# from tensorflow.core.protobuf import saved_model_pb2
 
 GOAL_EMB_TYPE = predictions.GOAL_EMB_TYPE
 THM_EMB_TYPE = predictions.THM_EMB_TYPE

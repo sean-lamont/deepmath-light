@@ -5,11 +5,13 @@ from __future__ import print_function
 
 import os
 import tempfile
+import unittest
 
-# from absl import flags
-# from absl.testing import parameterized
+import absl.flags
+from absl import flags
+from absl.testing import parameterized
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 
 from deepmath.deephol import embedding_store
 from deepmath.deephol import io_util
@@ -26,10 +28,10 @@ def _process_thms(thms):
   return [normalization_lib.normalize(thm).conclusion for thm in thms]
 
 
-class EmbeddingStoreTest(tf.test.TestCase, parameterized.TestCase):
+class EmbeddingStoreTest(parameterized.TestCase):
 
   def setUp(self):
-    self.test_subdirectory = tempfile.mkdtemp(dir=flags.FLAGS.test_tmpdir)
+    # self.test_subdirectory = tempfile.mkdtemp(dir=flags.FLAGS.test_tmpdir)
     self.store = embedding_store.TheoremEmbeddingStore(MOCK_PREDICTOR)
     self.thm_db = proof_assistant_pb2.TheoremDatabase()
     for i in range(8):
@@ -91,4 +93,4 @@ class EmbeddingStoreTest(tf.test.TestCase, parameterized.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+  unittest.main()

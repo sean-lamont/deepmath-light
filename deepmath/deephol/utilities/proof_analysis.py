@@ -7,7 +7,8 @@ from __future__ import absolute_import
 from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
-import tensorflow as tf
+# import tensorflow as tf
+import logging
 from typing import List, Optional, Tuple, Text
 from deepmath.deephol import deephol_pb2
 from deepmath.proof_assistant import proof_assistant_pb2
@@ -170,12 +171,12 @@ def find_reasons(
     for node in sorted(thm_node.values(), key=lambda n: n.index):
       node.update_parents(goal_to_node, closed)
     if not closed:
-      tf.logging.error('There are no closed leafs (tactic applications without '
+      logging.error('There are no closed leafs (tactic applications without '
                        'subgoals .')
 
       return None
   except GoalNotFoundError as xcp:
-    tf.logging.error(
+    logging.error(
         'Could not find subgoal "%s" of closed proof among closed '
         'nodes.', xcp.goal)
     return None
@@ -186,7 +187,7 @@ def find_reasons(
     i += 1
   for n in to_process:
     if not n.closed:
-      tf.logging.error('Root %d is marked closed, but it does not check out.',
+      logging.error('Root %d is marked closed, but it does not check out.',
                        n.index)
       return None
     n.processed = True
@@ -198,13 +199,13 @@ def find_reasons(
     node = to_process[i]
     i += 1
     if node.true_proof < 0 or not node.closed:
-      tf.logging.error('Node %d has no true proof, but it is marked proved.', i)
+      logging.error('Node %d has no true proof, but it is marked proved.', i)
       return None
     proof = node.node.proofs[node.true_proof]
     try:
       subgoals = [goal_to_node(subgoal) for subgoal in proof.subgoals]
     except GoalNotFoundError as xcp:
-      tf.logging.error('Could not find subgoal "%s" among proved nodes',
+      logging.error('Could not find subgoal "%s" among proved nodes',
                        xcp.goal)
       return None
     reasons.append((node.index, node.true_proof,

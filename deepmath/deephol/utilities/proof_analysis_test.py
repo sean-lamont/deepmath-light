@@ -4,12 +4,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import unittest
+
+# import tensorflow as tf
 from deepmath.deephol.utilities import proof_analysis
 from deepmath.deephol.utilities import proof_test_util
 
 
-class ProofAnalysisTest(tf.test.TestCase):
+class ProofAnalysisTest(unittest.TestCase):
 
   def test_empty_log_reasons(self):
     proof_log = proof_test_util.new_log(num_proofs=0)
@@ -141,4 +143,4 @@ class ProofAnalysisTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+  unittest.main()

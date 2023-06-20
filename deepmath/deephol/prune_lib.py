@@ -10,7 +10,8 @@ from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
 import time
-import tensorflow as tf
+import logging
+# import tensorflow as tf
 from typing import List, Text
 from deepmath.deephol.public import proof_assistant
 from deepmath.deephol import deephol_pb2
@@ -44,7 +45,7 @@ class ParameterPruning(object):
                theorem_db: proof_assistant_pb2.TheoremDatabase,
                hol_wrapper=None):
     if hol_wrapper and theorem_db:
-      tf.logging.warning(
+      logging.warning(
           'theorem_db provided will be ignored as hol_wrapper provided.')
     self.hol_wrapper = hol_wrapper
     if not self.hol_wrapper:
@@ -63,7 +64,7 @@ class ParameterPruning(object):
       tapp: The tactic application to be pruned.
     """
     if self.communication_failed:
-      tf.logging.error('Communication with prover failed. Not pruning...')
+      logging.error('Communication with prover failed. Not pruning...')
       return
     tactic = tapp.tactic
     parameters = tapp.parameters
@@ -92,11 +93,11 @@ class ParameterPruning(object):
         elapsed_msecs = int((time.time() - start_time) * 1000.0 + 0.5)
         time_spent = elapsed_msecs
       except error.StatusNotOk as exception:
-        tf.logging.error(exception)
+        logging.error(exception)
         elapsed_msecs = int((time.time() - start_time) * 1000.0 + 0.5)
         if exception.message.startswith(
             'Communication') and exception.message.endswith('failed.'):
-          tf.logging.error('Communication with prover failed. Not pruning...')
+          logging.error('Communication with prover failed. Not pruning...')
           self.communication_failed = True
           return
       if response.HasField('error'):

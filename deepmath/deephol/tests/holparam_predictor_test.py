@@ -14,8 +14,8 @@ import numpy as np
 # import tensorflow as tf
 import unittest
 from deepmath.deephol import holparam_predictor
-from deepmath.deephol.old_tests import predictions_abstract_base_test
-from deepmath.deephol.old_tests import test_util
+from deepmath.deephol.tests import predictions_abstract_base_test
+from deepmath.deephol.tests import test_util
 
 FLAGS = flags.FLAGS
 NUM_TACTICS = 41

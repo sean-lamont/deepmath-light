@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+# Import Type Annotations
+from __future__ import print_function
+
+import sys
+
 r""""DeepHOL non-distributed prover.
 
 Usage examples:
@@ -6,23 +13,34 @@ Usage examples:
     --output=${HOME}/deephol_out/proofs.textpbs \
 """
 
-from __future__ import absolute_import
-from __future__ import division
-# Import Type Annotations
-from __future__ import print_function
-
-import tensorflow as tf
+# import tensorflow as tf
 
 from deepmath.deephol import prover_flags
 from deepmath.deephol import prover_runner
 
 
-def main(argv):
+from deepmath.deephol.deephol_loop import loop_pb2
+from deepmath.deephol import io_util
+
+from absl import flags
+
+
+def main():
+  print (*prover_flags.process_prover_flags())
   prover_runner.program_started()
-  if len(argv) > 1:
-    raise Exception('Too many command-line arguments.')
   prover_runner.run_pipeline(*prover_flags.process_prover_flags())
 
 
 if __name__ == '__main__':
-  tf.app.run(main)
+  flags.DEFINE_string(
+    'config', '/home/sean/Documents/phd/deepmath-light/deepmath/deephol/deephol_loop/data/loop1.pbtxt',
+    'Config file'
+  )
+
+
+  FLAGS = flags.FLAGS
+  FLAGS(sys.argv)
+  config = io_util.load_text_proto(FLAGS.config, loop_pb2.LoopConfig)
+
+  print (config)
+  main()

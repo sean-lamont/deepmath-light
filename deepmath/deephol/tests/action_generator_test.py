@@ -6,7 +6,7 @@ from __future__ import division
 from __future__ import print_function
 from absl import flags
 from absl.testing import parameterized
-import tensorflow as tf
+# import tensorflow as tf
 from typing import List
 from google.protobuf import text_format
 from deepmath.deephol import action_generator
@@ -15,9 +15,11 @@ from deepmath.deephol import embedding_store
 from deepmath.deephol import holparam_predictor
 from deepmath.deephol import proof_search_tree
 from deepmath.deephol import prover_util
-from deepmath.deephol import test_util
+from deepmath.deephol.tests import test_util
 from deepmath.deephol import theorem_fingerprint
 from deepmath.proof_assistant import proof_assistant_pb2
+import unittest
+import logging
 
 FLAGS = flags.FLAGS
 
@@ -39,7 +41,7 @@ EQ_SYM = (
 
 def load_tactics(filename) -> List[deephol_pb2.Tactic]:
   tactics_info = deephol_pb2.TacticsInfo()
-  with tf.gfile.GFile(filename, 'r') as f:
+  with open(filename, 'r') as f:
     text_format.MergeLines(f, tactics_info)
   return tactics_info.tactics
 
@@ -128,7 +130,7 @@ class ActionGeneratorTest(parameterized.TestCase):
                                                   self.model_architecture)
     actions_with_scores = action_gen.step(self.node, self.test_premise_set)
     for action, score in sorted(actions_with_scores, key=lambda x: x.score):
-      tf.logging.info(str(score) + ': ' + str(action))
+      logging.info(str(score) + ': ' + str(action))
     self.assertIn('EQ_TAC', [action for action, _ in actions_with_scores])
 
   def test_action_generator_no_parameter_tactic(self):
@@ -219,4 +221,4 @@ class ActionGeneratorTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    unittest.main()

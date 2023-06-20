@@ -26,7 +26,7 @@ import logging
 # FLAGS = tf.flags.FLAGS
 
 # placeholder
-FLAGS = {'output': None,
+FLAGS = {'output': 'proof_test.textpbs',
          }
 
 
@@ -81,8 +81,9 @@ def run_pipeline(prover_tasks: List[proof_assistant_pb2.ProverTask],
 
         io_util.write_text_protos(path_output, proof_logs)
 
-    # tf.logging.info('Proving complete!')
+    logging.info('Proving complete!')
 
     logging.info('Proving complete!')
 
-    compute_stats(FLAGS['output'])
+    # compute_stats(FLAGS['output'])
+    compute_stats(path_output)

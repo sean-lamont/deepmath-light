@@ -5,7 +5,8 @@ from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
 
-import tensorflow as tf
+import unittest
+# import tensorflow as tf
 from typing import List
 
 from deepmath.deephol import deephol_pb2
@@ -75,7 +76,7 @@ def new_log(num_proofs: int = 1, time_spent: int = 10000):
       time_spent=time_spent)
 
 
-class StatsTest(tf.test.TestCase):
+class StatsTest(unittest.TestCase):
 
   def test_proof_log_stats_empty(self):
     proof_log = deephol_pb2.ProofLog()
@@ -85,12 +86,12 @@ class StatsTest(tf.test.TestCase):
     self.assertEqual(s.num_theorems_with_bad_proof, 0)
     self.assertEqual(s.num_nodes, 0)
     self.assertEqual(s.total_prediction_time, 0)
-    self.assertEmpty(s.node_prediction_time_histogram.h)
+    self.assertEqual(len(s.node_prediction_time_histogram.h), 0)
     self.assertEqual(s.node_prediction_time_histogram.h[42], 0)
-    self.assertEmpty(s.tapp_stat.time_spent_per_tapp_result)
-    self.assertEmpty(s.tapp_stat.time_spent_per_tactic)
-    self.assertEmpty(s.tapp_stat.total_tactic_applications_per_tactic)
-    self.assertEmpty(s.tapp_stat.successful_tactic_applications_per_tactic)
+    self.assertEqual(len(s.tapp_stat.time_spent_per_tapp_result), 0)
+    self.assertEqual(len(s.tapp_stat.time_spent_per_tactic), 0)
+    self.assertEqual(len(s.tapp_stat.total_tactic_applications_per_tactic), 0)
+    self.assertEqual(len(s.tapp_stat.successful_tactic_applications_per_tactic), 0)
 
   def test_proof_log_stats_root_only(self):
     proof_log = new_log(num_proofs=0)
@@ -140,12 +141,12 @@ class StatsTest(tf.test.TestCase):
     self.assertEqual(aggregate_stat.num_reduced_nodes, 3)
     self.assertEqual(aggregate_stat.num_closed_nodes, 4)
     self.assertEqual(aggregate_stat.time_spent_milliseconds, 10000)
-    self.assertNotEmpty(aggregate_stat.num_reduced_nodes_distribution)
+    self.assertGreaterEqual(len(aggregate_stat.num_reduced_nodes_distribution), 1)
     # 10000 ~~ 2**13
     self.assertEqual(aggregate_stat.proof_time_histogram.h[13], 1)
     self.assertEqual(aggregate_stat.proof_time_histogram_proved.h[13], 1)
-    self.assertEmpty(aggregate_stat.proof_time_histogram_failed.h)
-    self.assertNotEmpty(aggregate_stat.proof_prediction_time_histogram.h)
+    self.assertEqual(len(aggregate_stat.proof_time_histogram_failed.h), 0)
+    self.assertGreaterEqual(len(aggregate_stat.proof_prediction_time_histogram.h), 1)
 
   def test_proof_merge_stat_with_stat(self):
     aggregate_stat = deephol_stat_pb2.ProofAggregateStat(
@@ -249,4 +250,4 @@ class StatsTest(tf.test.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    unittest.main()

@@ -20,8 +20,10 @@ from deepmath.deephol.deephol_loop.missing import types_pb2
 
 # Base name of the status file in the top level directory.
 STATUS_BASENAME = 'status.pbtxt'
+
 # Base name of the configuration file in the top level directory.
 CONFIG_BASENAME = 'config.pbtxt'
+
 # Top level directory of the proof log. Each round will have its subdirectory
 # which is of format '%07d' % round. Each of that subdirectory will contain
 # a shareded recordio file with the proofs from that round as well as a

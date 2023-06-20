@@ -2,7 +2,6 @@
 
 #todo gfile
 
-import logging
 from __future__ import absolute_import
 from __future__ import division
 # Import Type Annotations
@@ -27,6 +26,7 @@ from deepmath.public import error
 # Max number of tactics to attempt to apply per NoBacktrack proofs.
 NO_BACKTRACK_SEARCH_NODES = 45
 
+import logging
 
 def _sample_from_interval(interval: deephol_pb2.IntegerInterval):
   return random.randint(interval.min_value, interval.max_value)

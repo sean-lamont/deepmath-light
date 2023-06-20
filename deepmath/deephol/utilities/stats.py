@@ -11,7 +11,8 @@ from __future__ import print_function
 
 import itertools
 import math
-import tensorflow as tf
+# import tensorflow as tf
+import logging
 from typing import List, Text, Tuple
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol import theorem_fingerprint
@@ -230,7 +231,7 @@ def merge_stat(target: deephol_stat_pb2.ProofAggregateStat,
                              source.node_prediction_time_histogram)
   if source.HasField('time_spent_milliseconds') and source.num_theorems_proved:
     if source.num_theorems_proved != 1:
-      tf.logging.error('More than one proof in single proof log; Cactus plot '
+      logging.error('More than one proof in single proof log; Cactus plot '
                        'will be incaccurate.')
     target.proof_closed_after_millis.append(source.time_spent_milliseconds)
 

@@ -6,16 +6,15 @@ light-weight pre/post-processing.
 
 from __future__ import absolute_import
 from __future__ import division
-# Import Type Annotations
 from __future__ import print_function
 import re
-
-# import tensorflow as tf
+import logging
 from typing import List, Optional, Text
 from google.protobuf import text_format
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol.public import recordio_util
 from deepmath.proof_assistant import proof_assistant_pb2
+import glob
 
 
 def _process_tactics_and_replacements(tactics_info: deephol_pb2.TacticsInfo,
@@ -55,11 +54,11 @@ def load_proto(filename: Text,
     A protobuf parsed from the text file.
   """
   proto = proto_constructor()
-  with tf.gfile.Open(filename, 'rb') as f:
+  with open(filename, 'rb') as f:
     file_content = f.read()
     proto.ParseFromString(file_content)
   if description:
-    tf.logging.info('Successfully read %s from "%s"', description, filename)
+    logging.info('Successfully read %s from "%s"', description, filename)
   return proto
 
 
@@ -77,21 +76,21 @@ def load_text_proto(filename: Text,
     A protobuf parsed from the text file.
   """
   proto = proto_constructor()
-  with tf.gfile.Open(filename) as f:
+  with open(filename) as f:
     text_format.MergeLines(f, proto)
   if description:
-    tf.logging.info('Successfully read %s from "%s"', description, filename)
+    logging.info('Successfully read %s from "%s"', description, filename)
   return proto
 
 
 def write_text_proto(filename: Text, proto):
-  with tf.gfile.Open(filename, 'w') as f:
+  with open(filename, 'w') as f:
     f.write(text_format.MessageToString(proto))
 
 
 def write_text_protos(filename: Text, protos):
   first = True
-  with tf.gfile.Open(filename, 'w') as f:
+  with open(filename, 'w') as f:
     for proto in protos:
       if not first:
         f.write('\n')
@@ -113,12 +112,12 @@ def load_tactics_from_file(tactics_filename: Text,
   """Load tactics from file, and (optional) apply replacements."""
   tactics_info = load_text_proto(tactics_filename, deephol_pb2.TacticsInfo,
                                  'tactics')
-  tf.logging.info('Found %d tactics.', len(tactics_info.tactics))
+  logging.info('Found %d tactics.', len(tactics_info.tactics))
   replacements = deephol_pb2.TacticsInfo()
   if tactics_replacement_filename:
     replacements = load_text_proto(tactics_replacement_filename,
                                    deephol_pb2.TacticsInfo, 'replacements')
-    tf.logging.info('Found %d tactic replacements.', len(replacements.tactics))
+    logging.info('Found %d tactic replacements.', len(replacements.tactics))
   return _process_tactics_and_replacements(tactics_info, replacements)
 
 
@@ -126,16 +125,19 @@ def load_theorem_database_from_file(filename: Text
                                    ) -> proof_assistant_pb2.TheoremDatabase:
   """Load a theorem database from a text protobuf file."""
   theorem_database = proof_assistant_pb2.TheoremDatabase()
-  if filename.endswith('.recordio'):
-    theorem_database = [
-        x for x in recordio_util.read_protos_from_recordio(
-            filename, proof_assistant_pb2.TheoremDatabase)
-    ]
-    theorem_database = theorem_database[0]
-  else:
-    with tf.gfile.Open(filename) as f:
-      text_format.MergeLines(f, theorem_database)
-  tf.logging.info('Successfully read theorem database from %s (%d theorems).',
+
+  # if filename.endswith('.recordio'):
+  #   theorem_database = [
+  #       x for x in recordio_util.read_protos_from_recordio(
+  #           filename, proof_assistant_pb2.TheoremDatabase)
+  #   ]
+  #   theorem_database = theorem_database[0]
+  # else:
+
+  with open(filename) as f:
+    text_format.MergeLines(f, theorem_database)
+
+  logging.info('Successfully read theorem database from %s (%d theorems).',
                   filename, len(theorem_database.theorems))
   return theorem_database
 
@@ -143,14 +145,14 @@ def load_theorem_database_from_file(filename: Text
 def load_text_protos(filename, proto_class):
   """Load protos from a text file where each line is one proto."""
   cnt = 0
-  with tf.gfile.Open(filename) as f:
+  with open(filename) as f:
     for line in f:
       if line.rstrip():
         proto = proto_class()
         text_format.Parse(line, proto)
         cnt += 1
         yield proto
-  tf.logging.info('Read %d protos from %s of type %s', cnt, filename,
+  logging.info('Read %d protos from %s of type %s', cnt, filename,
                   proto_class.DESCRIPTOR.full_name)
 
 
@@ -181,7 +183,7 @@ def read_protos(pattern: Text, proto_class):
     for proto in recordio_util.read_protos_from_recordio(pattern, proto_class):
       yield proto
     return
-  filenames = tf.io.gfile.glob(pattern)
+  filenames = glob.glob(pattern)
   if not filenames:
     raise ValueError('read_protos: No files found matching %s' % pattern)
   for filename in filenames:
@@ -211,5 +213,5 @@ def options_reader(options_proto, options_proto_path: Text,
   ret = load_text_proto(options_proto_path, options_proto)
   if overwrite:
     text_format.Merge(overwrite, ret)
-  tf.logging.info('Options:\n\n%s\n\n', ret)
+  logging.info('Options:\n\n%s\n\n', ret)
   return ret

@@ -6,8 +6,9 @@ from __future__ import division
 from __future__ import print_function
 
 from absl.testing import parameterized
-import tensorflow as tf
+# import tensorflow as tf
 
+import unittest
 from deepmath.deephol.utilities import sexpression_graphs
 from deepmath.proof_assistant import proof_assistant_pb2
 
@@ -556,4 +557,4 @@ class SExpressionGraphsTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
-  tf.test.main()
+    unittest.main()
