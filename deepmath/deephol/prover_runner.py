@@ -20,14 +20,15 @@ from deepmath.deephol import io_util
 from deepmath.deephol import prover
 from deepmath.deephol.utilities import stats
 from deepmath.proof_assistant import proof_assistant_pb2
+from absl import flags
 
 import logging
 
 # FLAGS = tf.flags.FLAGS
 
 # placeholder
-FLAGS = {'output': 'proof_test.textpbs',
-         }
+FLAGS = flags.FLAGS
+
 
 
 def program_started():
@@ -55,12 +56,10 @@ def compute_stats(output):
 
 def run_pipeline(prover_tasks: List[proof_assistant_pb2.ProverTask],
                  prover_options: deephol_pb2.ProverOptions, path_output: Text):
+
     """Iterate over all prover tasks and store them in the specified file."""
 
-    # if FLAGS.output.split('.')[-1] != 'textpbs':
-    #   tf.logging.warn('Output file should end in ".textpbs"')
-
-    if FLAGS['output'].split('.')[-1] != 'textpbs':
+    if FLAGS.output.split('.')[-1] != 'textpbs':
         logging.warning('Output file should end in ".textpbs"')
 
     prover.cache_embeddings(prover_options)
@@ -80,8 +79,6 @@ def run_pipeline(prover_tasks: List[proof_assistant_pb2.ProverTask],
                      len(proof_logs), path_output)
 
         io_util.write_text_protos(path_output, proof_logs)
-
-    logging.info('Proving complete!')
 
     logging.info('Proving complete!')
 

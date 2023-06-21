@@ -41,3 +41,8 @@ Should be able to try and reuse as much as possible from framework. Problems lie
 
   - sudo docker build . (returns container_id e.g. 8a85414b942e)
   - sudo docker run -d -p 2000:2000 --name=holist container_id
+
+## 
+
+- prover_runner runs prover based on prover_options file
+- prvoer_options gives theorem_database, tactics, type of proof search, proof search options, action_generator options, 

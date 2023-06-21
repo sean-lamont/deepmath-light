@@ -1,18 +1,15 @@
 """DeepHOL prover."""
-
-#todo gfile
-
 from __future__ import absolute_import
 from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
+
 import random
 import time
-# import tensorflow as tf
 from typing import Optional, Text
 from google.protobuf import text_format
+
 # Import predictors.
-from deepmath.deephol.public import proof_assistant
 from deepmath.deephol import action_generator, deephol_pb2
 from deepmath.deephol import embedding_store
 from deepmath.deephol import holparam_predictor
@@ -21,11 +18,11 @@ from deepmath.deephol import predictions
 from deepmath.deephol import proof_search_tree
 from deepmath.deephol import prover_util
 from deepmath.deephol import prune_lib
-from deepmath.proof_assistant import proof_assistant_pb2
+from deepmath.proof_assistant import proof_assistant_pb2, proof_assistant
 from deepmath.public import error
 # Max number of tactics to attempt to apply per NoBacktrack proofs.
 NO_BACKTRACK_SEARCH_NODES = 45
-
+import os
 import logging
 
 def _sample_from_interval(interval: deephol_pb2.IntegerInterval):
@@ -273,6 +270,7 @@ class BFSProver(Prover):
 
   def prove_one(self, tree: proof_search_tree.ProofSearchTree,
                 task: proof_assistant_pb2.ProverTask) -> Optional[Text]:
+
     """Searches for a proof via BFS.
 
     Args:
@@ -300,6 +298,9 @@ class BFSProver(Prover):
       # Note that the following function might change tree.cur_index
       # (if a node that was ignored suddenly becomes subgoal of a new
       # tactic application).
+
+
+      print (f"premise set: {len(task.premise_set)}")
       prover_util.try_tactics(node, self.options.max_top_suggestions,
                               self.options.min_successful_branches,
                               self.options.max_successful_branches,
@@ -317,22 +318,27 @@ class BFSProver(Prover):
     elif nodes_explored >= self.options.max_explored_nodes and not root.closed:
       return 'BFS: Node limit reached.'
 
-
 def get_predictor(options: deephol_pb2.ProverOptions
                  ) -> predictions.Predictions:
   """Returns appropriate predictor based on prover options."""
   model_arch = options.model_architecture
+
   if model_arch == deephol_pb2.ProverOptions.PAIR_DEFAULT:
     return holparam_predictor.HolparamPredictor(str(options.path_model_prefix))
+
   if model_arch == deephol_pb2.ProverOptions.PARAMETERS_CONDITIONED_ON_TAC:
     return holparam_predictor.TacDependentPredictor(
         str(options.path_model_prefix))
+
   if model_arch == deephol_pb2.ProverOptions.GNN_GOAL:
+
     raise NotImplementedError('GNN_GOAL not implemented for %s' %
         str(options.path_model_prefix))
+
   if (model_arch == deephol_pb2.ProverOptions.HIST_AVG or
       model_arch == deephol_pb2.ProverOptions.HIST_CONV or
       model_arch == deephol_pb2.ProverOptions.HIST_ATT):
+
     raise NotImplementedError(
         'History-dependent model %s is not supported in the prover.' %
         model_arch)
@@ -343,51 +349,70 @@ def get_predictor(options: deephol_pb2.ProverOptions
 
 def cache_embeddings(options: deephol_pb2.ProverOptions):
   emb_path = str(options.theorem_embeddings)
-  if options.HasField('theorem_embeddings') and not tf.gfile.Exists(emb_path):
+
+  if options.HasField('theorem_embeddings') and not os.path.exists(emb_path):
+
     logging.info(
         'theorem_embeddings file "%s" does not exist, computing & saving.',
         emb_path)
+
     emb_store = embedding_store.TheoremEmbeddingStore(get_predictor(options))
+
     emb_store.compute_embeddings_for_thms_from_db_file(
         str(options.path_theorem_database))
+
     emb_store.save_embeddings(emb_path)
 
 
 def create_prover(options: deephol_pb2.ProverOptions) -> Prover:
   """Creates a Prover object, initializing all dependencies."""
+
   theorem_database = io_util.load_theorem_database_from_file(
       str(options.path_theorem_database))
+
   tactics = io_util.load_tactics_from_file(
       str(options.path_tactics), str(options.path_tactics_replace))
+
   if options.action_generator_options.asm_meson_no_params_only:
-    logging.warn('Note: Using Meson action generator with no parameters.')
+    logging.warning('Note: Using Meson action generator with no parameters.')
     action_gen = action_generator.MesonActionGenerator()
+
   else:
     predictor = get_predictor(options)
     emb_store = None
+
     if options.HasField('theorem_embeddings'):
       emb_store = embedding_store.TheoremEmbeddingStore(predictor)
       emb_store.read_embeddings(str(options.theorem_embeddings))
       assert emb_store.thm_embeddings.shape[0] == len(theorem_database.theorems)
+
     action_gen = action_generator.ActionGenerator(
         theorem_database, tactics, predictor, options.action_generator_options,
         options.model_architecture, emb_store)
+
   hol_wrapper = setup_prover(theorem_database)
   logging.info('DeepHOL dependencies initialization complete.')
+
   if options.prover == 'bfs':
     return BFSProver(options, hol_wrapper, action_gen, theorem_database)
+
   return NoBacktrackProver(options, hol_wrapper, action_gen, theorem_database)
 
 
 def setup_prover(theorem_database: proof_assistant_pb2.TheoremDatabase):
   """Starts up HOL and seeds it with given TheoremDatabase."""
+
   logging.info('Setting up and registering theorems with proof assistant...')
   proof_assistant_obj = proof_assistant.ProofAssistant()
+
   for thm in theorem_database.theorems:
     response = proof_assistant_obj.RegisterTheorem(
         proof_assistant_pb2.RegisterTheoremRequest(theorem=thm))
+
     if response.HasField('error_msg') and response.error_msg:
       logging.fatal('Registration failed for %d with: %s' %
                        (response.fingerprint, response.error_msg))
+
   logging.info('Proof assistant setup done.')
+
   return proof_assistant_obj

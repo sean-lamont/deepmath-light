@@ -29,10 +29,9 @@ import collections
 import time
 import logging
 from typing import List, Optional, Tuple, Text
-from deepmath.deephol.public import proof_assistant
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol import theorem_fingerprint
-from deepmath.proof_assistant import proof_assistant_pb2
+from deepmath.proof_assistant import proof_assistant_pb2, proof_assistant
 from deepmath.public import error
 
 

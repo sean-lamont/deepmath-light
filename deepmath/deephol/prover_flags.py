@@ -28,9 +28,9 @@ HIST_ATT = deephol_pb2.ProverOptions.HIST_ATT
 # with prover_options.
 
 
-flags.DEFINE_string(
-    'prover_options', None,
-    'Required: path to file containing the ProverOptions proto')
+# flags.DEFINE_string(
+#     'prover_options', None,
+#     'Required: path to file containing the ProverOptions proto')
 
 flags.DEFINE_string(
     'task_list', None,
@@ -72,7 +72,7 @@ flags.DEFINE_integer('max_theorem_parameters', None,
                         'Override max_theorem_parameters in prover options.')
 
 # Must be specified from the command line. Not stored in ProverOptions.
-flags.DEFINE_string('output', None, 'Path where proof logs are saved.')
+flags.DEFINE_string('output', '/home/sean/Documents/phd/deepmath-light/deepmath/deephol/data/test_out', 'Path where proof logs are saved.')
 
 
 def _verify_prover_options(prover_options: deephol_pb2.ProverOptions) -> None:
@@ -112,9 +112,11 @@ def get_prover_options(prover_round_tag='manual',
   """Returns a ProverOptions proto based on FLAGS."""
   if not FLAGS.prover_options:
     logging.fatal('Mandatory flag --prover_options is not specified.')
+
   if not os.path.exists(FLAGS.prover_options):
     logging.fatal('Required prover options file "%s" does not exist.',
                      FLAGS.prover_options)
+
   prover_options = deephol_pb2.ProverOptions()
 
   if FLAGS.max_theorem_parameters is not None:
@@ -122,6 +124,7 @@ def get_prover_options(prover_round_tag='manual',
     logging.warning(
         'Overring max_theorem_parameters in prover options to %d.',
         FLAGS.max_theorem_parameters)
+
     prover_options.action_generator_options.max_theorem_parameters = (
         FLAGS.max_theorem_parameters)
 
@@ -130,17 +133,21 @@ def get_prover_options(prover_round_tag='manual',
 
   if prover_options.builtin_library:
     logging.warning('builtin_library is deprecated. Do not provide.')
+
     if str(prover_options.builtin_library) not in ['core']:
       logging.fatal('Unsupported built in library: %s',
                        prover_options.builtin_library)
+
   if FLAGS.timeout_seconds is not None:
     prover_options.timeout_seconds = FLAGS.timeout_seconds
+
   if not FLAGS.output:
     logging.fatal('Missing flag --output [recordio_pattern]')
     prover_options.prover_round = deephol_pb2.ProverRound(
         start_seconds=int(round(time.time())),
         tag=prover_round_tag,
         round=prover_round)
+
   _verify_prover_options(prover_options)
 
   # Log prover options.

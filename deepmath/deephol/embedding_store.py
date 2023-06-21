@@ -62,21 +62,25 @@ class TheoremEmbeddingStore(object):
     self.thm_embeddings = self.predictor.batch_thm_embedding(normalized_thms)
 
   def compute_embeddings_for_thms_from_db_file(self, file_path: Text) -> None:
+
     """Compute the embeddings for the theorems given in a test file.
 
     Args:
       file_path: Path to the text protobuf file containing the theorem database.
     """
+
     logging.info('Reading theorems database from "%s"', file_path)
     theorem_database = io_util.load_theorem_database_from_file(file_path)
     self.compute_embeddings_for_thms_from_db(theorem_database)
 
   def read_embeddings(self, file_path: Text) -> None:
+
     """Read the embeddings and theorem list from the specified files.
 
     Args:
       file_path: Path to the file in which the embeddings are stored.
     """
+
     logging.info('Reading embeddings from "%s"', file_path)
     with open(file_path, 'rb') as f:
       self.thm_embeddings = np.load(f)
