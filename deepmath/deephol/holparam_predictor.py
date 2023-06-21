@@ -12,7 +12,7 @@ from typing import Optional
 from typing import Text
 
 from deepmath.deephol import predictions
-from deepmath.deephol import process_sexp
+from deepmath.deephol.utilities import process_sexp
 
 GOAL_EMB_TYPE = predictions.GOAL_EMB_TYPE
 THM_EMB_TYPE = predictions.THM_EMB_TYPE

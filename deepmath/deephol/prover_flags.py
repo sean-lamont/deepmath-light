@@ -6,7 +6,6 @@ from __future__ import division
 from __future__ import print_function
 import re
 import time
-# import tensorflow as tf
 from google.protobuf import text_format
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol import io_util
@@ -27,10 +26,10 @@ HIST_ATT = deephol_pb2.ProverOptions.HIST_ATT
 # This is a required parameter. The prover will fail if it is not provided
 # with prover_options.
 
-
-# flags.DEFINE_string(
-#     'prover_options', None,
-#     'Required: path to file containing the ProverOptions proto')
+flags.DEFINE_string(
+    'prover_options', '/home/sean/Documents/phd/deepmath-light/deepmath/deephol/data/prover_options.pbtxt',
+    'Required: path to file containing the ProverOptions proto'
+)
 
 flags.DEFINE_string(
     'task_list', None,
@@ -71,8 +70,8 @@ flags.DEFINE_integer(
 flags.DEFINE_integer('max_theorem_parameters', None,
                         'Override max_theorem_parameters in prover options.')
 
-# Must be specified from the command line. Not stored in ProverOptions.
-flags.DEFINE_string('output', '/home/sean/Documents/phd/deepmath-light/deepmath/deephol/data/test_out', 'Path where proof logs are saved.')
+flags.DEFINE_string('output', '/home/sean/Documents/phd/deepmath-light/deepmath/deephol/data/test_out.pbtxt',
+                    'Path where proof logs are saved.')
 
 
 def _verify_prover_options(prover_options: deephol_pb2.ProverOptions) -> None:

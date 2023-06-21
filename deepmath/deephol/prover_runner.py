@@ -72,9 +72,6 @@ def run_pipeline(prover_tasks: List[proof_assistant_pb2.ProverTask],
         proof_logs.append(proof_log)
 
     if path_output:
-        # tf.logging.info('Writing %d proof logs as text proto to %s',
-        #                 len(proof_logs), path_output)
-
         logging.info('Writing %d proof logs as text proto to %s',
                      len(proof_logs), path_output)
 
@@ -82,5 +79,4 @@ def run_pipeline(prover_tasks: List[proof_assistant_pb2.ProverTask],
 
     logging.info('Proving complete!')
 
-    # compute_stats(FLAGS['output'])
     compute_stats(path_output)

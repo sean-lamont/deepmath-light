@@ -123,22 +123,16 @@ def load_tactics_from_file(tactics_filename: Text,
 
 def load_theorem_database_from_file(filename: Text
                                    ) -> proof_assistant_pb2.TheoremDatabase:
+
   """Load a theorem database from a text protobuf file."""
   theorem_database = proof_assistant_pb2.TheoremDatabase()
-
-  # if filename.endswith('.recordio'):
-  #   theorem_database = [
-  #       x for x in recordio_util.read_protos_from_recordio(
-  #           filename, proof_assistant_pb2.TheoremDatabase)
-  #   ]
-  #   theorem_database = theorem_database[0]
-  # else:
 
   with open(filename) as f:
     text_format.MergeLines(f, theorem_database)
 
   logging.info('Successfully read theorem database from %s (%d theorems).',
                   filename, len(theorem_database.theorems))
+
   return theorem_database
 
 

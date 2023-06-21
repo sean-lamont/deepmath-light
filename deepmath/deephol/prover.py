@@ -299,8 +299,6 @@ class BFSProver(Prover):
       # (if a node that was ignored suddenly becomes subgoal of a new
       # tactic application).
 
-
-      print (f"premise set: {len(task.premise_set)}")
       prover_util.try_tactics(node, self.options.max_top_suggestions,
                               self.options.min_successful_branches,
                               self.options.max_successful_branches,
@@ -391,6 +389,7 @@ def create_prover(options: deephol_pb2.ProverOptions) -> Prover:
         options.model_architecture, emb_store)
 
   hol_wrapper = setup_prover(theorem_database)
+
   logging.info('DeepHOL dependencies initialization complete.')
 
   if options.prover == 'bfs':

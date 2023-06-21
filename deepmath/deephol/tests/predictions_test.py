@@ -8,7 +8,7 @@ import unittest
 from absl.testing import parameterized
 import numpy as np
 # import tensorflow as tf
-from deepmath.deephol import mock_predictions_lib
+from deepmath.deephol.tests import mock_predictions_lib
 from deepmath.deephol import predictions
 
 TEST_ARRAY = np.reshape(np.arange(100), (10, 10)).astype(float)

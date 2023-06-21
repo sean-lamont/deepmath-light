@@ -1,5 +1,9 @@
 """Converter from ProofLog proto to a tf Example."""
 
+# todo make this convert into torch dataset.
+# todo figure out how hard negatives work, looks like they're set in prune_lib when they give a different subgoal than what was successful
+# todo where do they augment with random negatives for training????
+
 from __future__ import absolute_import
 from __future__ import division
 # Import Type Annotations

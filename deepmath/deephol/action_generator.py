@@ -1,4 +1,4 @@
-"""Action Geneator API.
+"""Action Generator API.
 
 From information about theorem prover's state, generate a set of possible
 actions to take in the prover.
@@ -16,10 +16,9 @@ from typing import List, Tuple, Optional, Text
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol import embedding_store
 from deepmath.deephol import predictions
-from deepmath.deephol import process_sexp
 from deepmath.deephol import proof_search_tree
 from deepmath.deephol import theorem_fingerprint
-from deepmath.deephol.utilities import normalization_lib
+from deepmath.deephol.utilities import normalization_lib, process_sexp
 from deepmath.proof_assistant import proof_assistant_pb2
 
 Suggestion = collections.namedtuple('Suggestion', ['string', 'score'])
@@ -71,11 +70,13 @@ class SimilarityScorer(object):
   def reset_word_weights(self):
     """Reset word weights, and recompute premise_vectors."""
     logging.info('Resetting word weights')
+
     self.word_weights = np.multiply(
         self.inv_freq,
         np.absolute(
             np.random.normal(
                 loc=1.0, scale=WORD_WEIGHTS_NOISE_SCALE, size=self.num_words)))
+
     self.premise_vectors = np.array([
         self.vectorize(_theorem_string_for_similarity_scorer(theorem))
         for theorem in self.theorem_database.theorems
@@ -211,12 +212,15 @@ class ActionGenerator(object):
 
   def compute_bag_of_words_closest(self, goal, thm_number):
     self.similarity_scorer.reset_word_weights()
+
     goal_vector = self.similarity_scorer.vectorize(
         _theorem_string_for_similarity_scorer(goal))
+
     distance_scores = scipy.spatial.distance.cdist(
         self.similarity_scorer.premise_vectors[:thm_number],
         goal_vector.reshape(1, -1), 'cosine').reshape(-1).tolist()
     ranked_closest = sorted(zip(distance_scores, self.thm_names))
+
     return ranked_closest[:self.options.max_theorem_parameters]
 
   def compute_network_based_closest(self, goal, thm_number):
