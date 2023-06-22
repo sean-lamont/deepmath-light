@@ -174,6 +174,7 @@ class SExpressionGraphsTest(parameterized.TestCase):
         '(fun (fun (prod ?0 ?0) (bool)) (bool)) P) (v (fun (prod ?0 ?0) '
         '(bool)) l))) (a (a (c (fun (fun (prod ?0 ?0) (bool)) (fun ?0 (bool))) '
         'fl) (v (fun (prod ?0 ?0) (bool)) l)) (v ?0 x))))))))))')
+
     self.assertLen(g.labels, 59)
 
   def test_repeated_add(self):
@@ -225,6 +226,35 @@ class SExpressionGraphsTest(parameterized.TestCase):
   def test_add_theorem(self, theorem, expected_val):
 
     g = sexpression_graphs.SExpressionGraph(theorem)
+
+    # nodes = []
+    # def print_rec(node, depth):
+    #     if len(g.get_children(node)) == 0:
+    #         print ("----" * depth + node)
+    #         nodes.append(sexpression_graphs.to_node_id(node))
+    #     for i,child in enumerate(g.get_children(node)):
+    #         if i == 0:
+    #             print("----" * depth + g.to_text(child))
+    #             continue
+    #         nodes.append(child)
+    #         print_rec(g.to_text(child), depth + 1)
+    #
+    # test_ = '(a (c (fun (fun A bool) bool) forall) (l (v A x) (a (a (c (fun (fun A bool) A) =) (v A x)) (v A x))))'
+    # g = sexpression_graphs.SExpressionGraph(test_)
+    # print_rec(g.to_text(g.roots()[0]),0)
+    #
+    # print ([g.to_text(x) for x in set(nodes)])
+    # print (len(set(nodes)))
+    # # print ([g.to_text(label) for label in g.labels if g.labels[label] is not None])
+    # # print ([(g.to_text(label), [g.to_text(z) for z in g.get_parents(g.to_text(label))]) for label in g.labels])
+    # for label in g.labels:
+    #     print ("\n")
+    #     print (g.to_text(label), [g.to_text(z) for z in g.get_parents(g.to_text(label))])
+    #     print (g.to_text(label), [g.to_text(z) for z in g.get_children(g.to_text(label))])
+    #     print ("\n")
+    #
+
+
     self.assertLen(g.roots(), 1)
     self.assertEqual(g.to_text(g.roots()[0]), expected_val)
 

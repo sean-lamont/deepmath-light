@@ -1,4 +1,4 @@
-"""A minimal SExpression parser for terms, goals, and theorems from HOL Light.
+"""A minimal SExp,ession parser for terms, goals, and theorems from HOL Light.
 
 Assumes SExpressions of the form '(word1 word1 (word1) () (() ()))'.
 That is, spaces and parantheses are treated as separators, bare words are
