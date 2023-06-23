@@ -1,14 +1,11 @@
 from deepmath.deephol.utilities.sexpression_graphs import SExpressionGraph
 from deepmath.deephol.utilities import sexpression_graphs
 
-from typing import Dict, Iterable, List, NewType, Optional, Set, Text
-from typing import Union
+from typing import Dict, Text
 import torch
 from torch_geometric.data import Data
 
-
 def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
-
     sexpression = SExpressionGraph(sexpression_txt)
 
     edges = []
@@ -26,12 +23,9 @@ def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
         for i,child in enumerate(sexpression.get_children(node)):
             if i == 0:
                 node_to_tok[node_id] = sexpression.to_text(child)
-                # print("----" * depth + sexpression.to_text(child))
                 continue
 
             edges.append((node_id, child, i))
-            # order of children
-
             process_sexpression_graph(sexpression.to_text(child), depth + 1)
 
 
@@ -61,7 +55,7 @@ def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
     edge_index = torch.LongTensor([senders,receivers])
     edge_attr = torch.LongTensor(edge_attr)
 
-    x = torch.LongTensor([vocab[tok] for tok in tok_list])
+    x = torch.LongTensor([vocab[tok] if tok in vocab else vocab['UNK'] for tok in tok_list])
 
     return Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
