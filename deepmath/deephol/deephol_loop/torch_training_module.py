@@ -1,23 +1,22 @@
+import logging
 import traceback
-import wandb
 import warnings
 import einops
 
 warnings.filterwarnings('ignore')
 import lightning.pytorch as pl
-from lightning.pytorch.loggers import WandbLogger
-# from models.get_model import get_model
-# from models.gnn.formula_net.formula_net import BinaryClassifier
-from deepmath.deephol.deephol_loop import torch_data_module
 import torch
+
+# numerically stable log(1 + e^x) function
+stable_1p = lambda x: torch.where(x < 50, torch.log1p(torch.exp(x)), x)
 
 def auroc(pos, neg):
     return torch.sum(torch.log(1 + torch.exp(-1 * (pos - neg))))
+    # return torch.sum(stable_1p(-1 * (pos - neg)))
 
 
-def binary_loss(preds, targets):
-    return -1. * torch.sum(targets * torch.log(preds) + (1 - targets) * torch.log((1. - preds)))
-
+ce_loss = torch.nn.CrossEntropyLoss()
+bce_loss = torch.nn.BCEWithLogitsLoss()
 
 '''
 
@@ -29,26 +28,23 @@ They are weighted differently to favour negatives from the same goal
 '''
 
 
-class HOListTraining(pl.LightningModule):
+class HOListTraining_(pl.LightningModule):
     def __init__(self,
                  embedding_model_goal,
                  embedding_model_premise,
                  tac_model,
                  combiner_model,
-                 batch_size=32,
+                 batch_size=16,
                  lr=1e-4):
         super().__init__()
 
         self.embedding_model_goal = embedding_model_goal
         self.embedding_model_premise = embedding_model_premise
         self.tac_model = tac_model
-        self.tac_model = tac_model
         self.combiner_model = combiner_model
         self.eps = 1e-6
         self.lr = lr
         self.batch_size = batch_size
-
-        self.save_hyperparameters()
 
     def loss_func(self, tac_pred, true_tac, pos_premise_scores, neg_premise_scores, extra_neg_premise_scores,
                   tac_weight=1,
@@ -56,16 +52,19 @@ class HOListTraining(pl.LightningModule):
                   auroc_weight=4,
                   same_goal_weight=2):
 
-        # bce for tac
-        tac_loss = binary_loss(tac_pred, true_tac)
-        pairwise_loss_positives = binary_loss(pos_premise_scores, torch.ones(pos_premise_scores.shape[0]))
+        tac_loss = ce_loss(tac_pred, true_tac)
+        pairwise_loss_positives = bce_loss(pos_premise_scores.squeeze(1),
+                                           torch.ones(pos_premise_scores.shape[0]).to(self.device))
 
-        pairwise_loss_main_negatives = binary_loss(neg_premise_scores, torch.zeros(neg_premise_scores.shape[0]))
-        pairwise_loss_extra_negatives = binary_loss(extra_neg_premise_scores,
-                                                    torch.zeros(extra_neg_premise_scores.shape[0]))
+        pairwise_loss_main_negatives = bce_loss(neg_premise_scores.flatten(0, 1), torch.zeros(
+            neg_premise_scores.shape[0] * neg_premise_scores.shape[1]).to(self.device))
+
+        pairwise_loss_extra_negatives = bce_loss(extra_neg_premise_scores.flatten(0, 1), torch.zeros(
+            extra_neg_premise_scores.shape[0] * extra_neg_premise_scores.shape[1]).to(self.device))
 
         pos_premise_scores_main_negatives = einops.repeat(pos_premise_scores, 'b 1 -> b k',
                                                           k=neg_premise_scores.shape[-1])
+
         auroc_loss_main_negatives = auroc(pos_premise_scores_main_negatives, neg_premise_scores)
 
         pos_premise_scores_extra_negatives = einops.repeat(pos_premise_scores, 'b 1 -> b k',
@@ -79,24 +78,81 @@ class HOListTraining(pl.LightningModule):
 
         return final_loss
 
-    def forward(self, goal, premise):
-        return
+    def val_func(self, tac_pred, true_tac, pos_premise_scores, neg_premise_scores, extra_neg_premise_scores):
+        # todo weighted tactics and topk?
+        tac_pred = torch.argmax(tac_pred, dim=1)
+        tac_acc = torch.sum(tac_pred == true_tac) / tac_pred.shape[0]
+
+        neg_premise_scores = torch.cat([neg_premise_scores, extra_neg_premise_scores], dim=1)
+        pos_premise_scores_dupe = einops.repeat(pos_premise_scores, 'b 1 -> b k',
+                                                k=neg_premise_scores.shape[-1])
+
+        rel_param_acc = torch.sum(pos_premise_scores_dupe > neg_premise_scores) / (
+                    neg_premise_scores.shape[0] * neg_premise_scores.shape[1])
+
+        pos_acc = torch.sum(torch.sigmoid(pos_premise_scores) > 0.5) / pos_premise_scores.shape[0]
+        neg_acc = torch.sum(torch.sigmoid(neg_premise_scores) > 0.5) / (
+                    neg_premise_scores.shape[0] * neg_premise_scores.shape[1])
+
+        return tac_acc, rel_param_acc, pos_acc, neg_acc
+
+    def forward(self, goals, pos_thms, neg_thms, true_tacs):
+        goals = self.embedding_model_goal(goals).unsqueeze(1)
+        pos_thms = self.embedding_model_premise(pos_thms).unsqueeze(1)
+        neg_thms = torch.stack([self.embedding_model_premise(neg_thm) for neg_thm in neg_thms], dim=0)
+
+        # construct extra_neg_thms after embedding
+        extra_neg_thms = torch.stack([torch.cat([torch.cat([pos_thms[:i], pos_thms[(i + 1):]], dim=0),
+                                                 torch.cat([neg_thms[:i], neg_thms[(i + 1):]], dim=0)],
+                                                dim=1).flatten(0, 1)
+                                      for i in range(len(goals))], dim=0)
+
+        tac_preds = self.tac_model(goals)
+
+        pos_scores = self.combiner_model(goals, pos_thms, true_tacs)
+        neg_scores = self.combiner_model(einops.repeat(goals, 'b 1 d -> b k d', k=neg_thms.shape[1]), neg_thms,
+                                         true_tacs)
+
+        extra_neg_scores = self.combiner_model(einops.repeat(goals, 'b 1 d -> b k d', k=extra_neg_thms.shape[1]),
+                                               extra_neg_thms, true_tacs)
+
+        return tac_preds.flatten(1, 2), pos_scores.flatten(1, 2), neg_scores.flatten(1, 2), extra_neg_scores.flatten(1,
+                                                                                                                     2)
 
     def training_step(self, batch, batch_idx):
-        goals, true_tacs, pos_thms, neg_thms, extra_neg_thms = batch
-
+        goals, true_tacs, pos_thms, neg_thms = batch
         try:
-            tac_preds, pos_scores, neg_scores, extra_neg_scores = self(goals, pos_thms, neg_thms, extra_neg_thms)
+            tac_preds, pos_scores, neg_scores, extra_neg_scores = self(goals, pos_thms, neg_thms, true_tacs)
         except Exception as e:
-            print(traceback.print_exc())
-            print(f"Error in forward: {e}")
+            logging.debug(traceback.print_exc())
+            logging.warning(f"Error in forward: {e}")
             return
 
-        loss = self.loss_func(tac_preds, true_tacs, pos_scores, neg_scores, extra_neg_scores)
-        self.log("loss", loss, batch_size=self.batch_size)
+        loss = self.loss_func(tac_preds, true_tacs,
+                              pos_scores, neg_scores,
+                              extra_neg_scores)
+
+        if not torch.isfinite(loss):
+            logging.warning(f"Loss error: {loss}")
+            return
+
+        self.log("loss", loss, batch_size=self.batch_size, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
+        goals, true_tacs, pos_thms, neg_thms = batch
+        try:
+            tac_preds, pos_scores, neg_scores, extra_neg_scores = self(goals, pos_thms, neg_thms, true_tacs)
+        except Exception as e:
+            logging.debug(traceback.print_exc())
+            logging.warning(f"Error in forward: {e}")
+            return
+
+        # get accuracy wrt true
+        tac_acc, rel_param_acc, pos_acc, neg_acc = self.val_func(tac_preds, true_tacs, pos_scores, neg_scores,
+                                                                 extra_neg_scores)
+        self.log_dict({'tac_acc': tac_acc, 'rel_param_acc': rel_param_acc, 'pos_acc': pos_acc, 'neg_acc': neg_acc},
+                      batch_size=self.batch_size, prog_bar=True)
         return
 
     def configure_optimizers(self):
@@ -107,4 +163,4 @@ class HOListTraining(pl.LightningModule):
         try:
             loss.backward()
         except Exception as e:
-            print(f"Error in backward: {e}")
+            logging.warning(f"Error in backward: {e}")

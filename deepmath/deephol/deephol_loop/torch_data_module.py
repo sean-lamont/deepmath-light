@@ -11,6 +11,7 @@ from deepmath.deephol import deephol_pb2
 from tqdm import tqdm
 from deepmath.deephol.utilities.sexpression_to_torch import sexpression_to_pyg
 from torch_geometric.data.batch import Batch
+from torch_geometric.data import Data
 
 
 class HOListTrainingModule(LightningDataModule):
@@ -33,7 +34,7 @@ class HOListTrainingModule(LightningDataModule):
             logging.info('Generating data..')
             os.mkdir(self.dir)
 
-            scrub_parameters = options_pb2.ConvertorOptions.VALIDATION_AND_TESTING
+            scrub_parameters = options_pb2.ConvertorOptions.NOTHING
             tactics_filename = '/home/sean/Documents/phd/deepmath-light/deepmath/deephol/data/hollight_tactics.textpb'
 
             logging.info('Loading theorem database..')
@@ -67,10 +68,15 @@ class HOListTrainingModule(LightningDataModule):
             for j,i in tqdm(enumerate(converter.process_proof_logs(val_logs))):
                 val_proof_logs.append(i)
 
-            all_params = []
-            for a in train_proof_logs + val_proof_logs:
-                all_params.extend(a['thms'])
+            train_params = []
+            val_params = []
+            for a in train_proof_logs:
+                train_params.extend(a['thms'])
 
+            for a in val_proof_logs:
+                val_params.extend(a['thms'])
+
+            all_params = train_params + val_params
 
             all_exprs = list(
                 set([a['goal'] for a in train_proof_logs] + [a['goal'] for a in val_proof_logs] + all_params))
@@ -86,7 +92,7 @@ class HOListTrainingModule(LightningDataModule):
             val_proof_logs = [{'goal': a['goal'], 'thms': a['thms'], 'tac_id': a['tac_id']} for a in val_proof_logs]
 
             data = {'train_data': train_proof_logs, 'val_data': val_proof_logs,
-                    'torch_dict': torch_dict, 'thm_ls': list(set(all_params)), 'vocab': vocab}
+                    'torch_dict': torch_dict, 'train_thm_ls': list(set(train_params)), 'vocab': vocab}
 
             torch.save(data, self.dir + '/data.pt')
             logging.info('Done')
@@ -98,7 +104,7 @@ class HOListTrainingModule(LightningDataModule):
             self.val_data = data['val_data']
             self.torch_dict = data['torch_dict']
             self.vocab = data['vocab']
-            self.thms_ls = data['thm_ls']
+            self.thms_ls = data['train_thm_ls']
 
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
@@ -108,33 +114,28 @@ class HOListTrainingModule(LightningDataModule):
 
     def gen_batch(self, batch):
         # todo filter negative sampling to be disjoint from positive samples
+
         # batch will be a list of proof step dictionaries with goal, thms, tactic_id
         goals = [self.torch_dict[x['goal']] for x in batch]
+
         # select random positive sample
-        pos_thms = [self.torch_dict[random.choice(x['thms'])] for x in batch]
+        # if no parameters set it as a single element with '1' mapping to special token for no parameters
+        pos_thms = [self.torch_dict[random.choice(x['thms'])] if len(x['thms']) > 0
+                    else Data(x=torch.LongTensor([1]), edge_index=torch.LongTensor([[], []]), edge_attr=torch.LongTensor([]))
+                    for x in batch]
         tacs = torch.LongTensor([x['tac_id'] for x in batch])
 
         # 15 random negative samples per goal
         neg_thms = [[self.torch_dict[a] for a in random.sample(self.thms_ls, 15)] for _ in goals]
 
-        # for each goal, take all positive and negative theorems from every other goal
-        extra_neg_thms = [pos_thms[:i] + pos_thms[(i+1):]
-                          + [x for a in neg_thms[:i] + neg_thms[(i+1):] for x in a]
-                          for i in range(len(goals))]
-
-
         goals = Batch.from_data_list(goals)
         pos_thms = Batch.from_data_list(pos_thms)
         neg_thms = [Batch.from_data_list(th) for th in neg_thms]
-        extra_neg_thms = [Batch.from_data_list(th) for th in extra_neg_thms]
 
-        return goals, tacs, pos_thms, neg_thms, extra_neg_thms
-
-        # loss is given by 1 * cross entropy of tactic fn T(goal) = t, 0.2 * cross_entropy of pairwise scorer (P(goal, premise, tac) = s, s_hat = 0,1 if premise pos/neg),
-        # + 4 * AUCROC loss, sum over combination of all positive and negative samples, taking log-normalised ratio of their scores (i.e. sum over all pairwise scores, ln( (1 + exp(pos_score)) / (1 + exp(neg_score)) )
+        return goals, tacs, pos_thms, neg_thms
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    module = HOListTrainingModule('/home/sean/Documents/phd/deepmath-light/deepmath/train_data/')
+    module = HOListTrainingModule('/home/sean/Documents/phd/deepmath-light/deepmath/train_data_new/')
     module.prepare_data()
