@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+from torch_geometric.data import Data
 import torch
 from torch import nn
 from torch_scatter import scatter_add, scatter_mean
 import torch_geometric.nn as gnn
 import torch_geometric.utils as utils
 from einops import rearrange
-from models.gnn.formula_net.formula_net import FormulaNetSAT
+from deepmath.models.gnn.formula_net.gnn_encoder import GNNEncoder
 from .utils import pad_batch, unpad_batch
-from models.gnn.gnn_layers import get_simple_gnn_layer, EDGE_GNN_TYPES
-from models.gnn.digae.digae_model import DigaeSE
+from deepmath.models.gnn.gnn_layers import get_simple_gnn_layer, EDGE_GNN_TYPES
+# from deepmath.models.gnn.digae.digae_model import DigaeSE
 
 
 class Attention(gnn.MessagePassing):
@@ -46,11 +47,13 @@ class Attention(gnn.MessagePassing):
             self.khop_structure_extractor = KHopStructureExtractor(embed_dim, gnn_type=gnn_type,
                                                                    num_layers=k_hop, **kwargs)
 
-        elif self.se == "digae":
-            self.structure_extractor = DigaeSE(embed_dim, 64, embed_dim // 2)
+        # elif self.se == "digae":
+        #     self.structure_extractor = DigaeSE(embed_dim, 64, embed_dim // 2)
 
-        elif self.se == "formula-net":
-            self.structure_extractor = FormulaNetSAT(embedding_dim=embed_dim, num_iterations=k_hop)
+        elif self.se == "gnn-encoder":
+            self.structure_extractor = GNNEncoder(input_shape=None, embedding_dim=embed_dim,
+                                                  num_iterations=k_hop, global_pool=False,
+                                                  dropout=dropout, in_embed=False)
 
         else:
             self.structure_extractor = StructureExtractor(embed_dim, gnn_type=gnn_type,
@@ -122,7 +125,7 @@ class Attention(gnn.MessagePassing):
                 subgraph_edge_attr=subgraph_edge_attr,
             )
         else:
-            x_struct = self.structure_extractor(x, edge_index, edge_attr)
+            x_struct = self.structure_extractor(Data(x=x, edge_index=edge_index, edge_attr=edge_attr))
             # can set x_struct = x here for normal transformer
 
         # Compute query and key matrices

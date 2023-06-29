@@ -2,7 +2,7 @@ from deepmath.models.tactic_predictor import TacticPrecdictor, CombinerNetwork
 from lightning.pytorch.loggers import WandbLogger
 import logging
 from deepmath.deephol.deephol_loop import torch_training_module
-from deepmath.models.gnn.formula_net.formula_net import FormulaNetEdges
+from deepmath.models.gnn.formula_net.gnn_encoder import GNNEncoder
 import torch
 from deepmath.deephol.deephol_loop.torch_data_module import HOListTrainingModule
 import lightning.pytorch as pl
@@ -12,8 +12,8 @@ import lightning.pytorch as pl
 if __name__ == "__main__":
     NUM_TOKENS = 2044 + 5
     logging.basicConfig(level=logging.DEBUG)
-    embedding_model_goal = FormulaNetEdges(input_shape=NUM_TOKENS, embedding_dim=128, num_iterations=12)
-    embedding_model_premise = FormulaNetEdges(input_shape=NUM_TOKENS, embedding_dim=128, num_iterations=12)
+    embedding_model_goal = GNNEncoder(input_shape=NUM_TOKENS, embedding_dim=128, num_iterations=12)
+    embedding_model_premise = GNNEncoder(input_shape=NUM_TOKENS, embedding_dim=128, num_iterations=12)
     tac_model = TacticPrecdictor(embedding_dim=1024, num_tactics=41)
     combiner_model = CombinerNetwork(embedding_dim=1024, num_tactics=41, tac_embed_dim=128)
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
 
     logger = WandbLogger(project='HOList Pretrain',
-                         name='Initial GNN Run',
+                         name='GNN',
                          # config=self.config,
                          # notes=self.config['notes'],
                          # log_model="all",

@@ -1,5 +1,5 @@
 import torch_geometric.nn as gnn
-from models.sat.layers import StructureExtractor
+from deepmath.models.sat.layers import StructureExtractor
 from torch import nn
 
 class GCNGNN(nn.Module):

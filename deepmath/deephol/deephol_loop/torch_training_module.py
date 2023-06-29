@@ -91,7 +91,7 @@ class HOListTraining_(pl.LightningModule):
                     neg_premise_scores.shape[0] * neg_premise_scores.shape[1])
 
         pos_acc = torch.sum(torch.sigmoid(pos_premise_scores) > 0.5) / pos_premise_scores.shape[0]
-        neg_acc = torch.sum(torch.sigmoid(neg_premise_scores) > 0.5) / (
+        neg_acc = torch.sum(torch.sigmoid(neg_premise_scores) < 0.5) / (
                     neg_premise_scores.shape[0] * neg_premise_scores.shape[1])
 
         return tac_acc, rel_param_acc, pos_acc, neg_acc
@@ -124,7 +124,6 @@ class HOListTraining_(pl.LightningModule):
         try:
             tac_preds, pos_scores, neg_scores, extra_neg_scores = self(goals, pos_thms, neg_thms, true_tacs)
         except Exception as e:
-            logging.debug(traceback.print_exc())
             logging.warning(f"Error in forward: {e}")
             return
 

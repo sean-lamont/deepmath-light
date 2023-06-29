@@ -1,7 +1,7 @@
 import einops
 import torch
 from torch import nn
-from models.transformer.transformer_encoder_model import TransformerEmbedding
+from deepmath.models.transformer.transformer_encoder_model import TransformerEmbedding
 
 class AttentionRelations(nn.Module):
     def __init__(self, ntoken,

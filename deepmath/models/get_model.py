@@ -1,8 +1,7 @@
 from deepmath.models.transformer.transformer_encoder_model import TransformerWrapper
-from deepmath.models.gnn.formula_net.formula_net import FormulaNetEdges
+from deepmath.models.gnn.formula_net.gnn_encoder import GNNEncoder
 from deepmath.models.relation_transformer.relation_transformer_new import AttentionRelations
 from deepmath.models.relation_transformer.relation_transformer_small import AttentionRelationSmall
-from deepmath.models.gnn.digae.digae_model import DigaeEmbedding
 from deepmath.models.sat.models import GraphTransformer
 from deepmath.models.gnn.pna import GCNGNN, DiGCNGNN
 
@@ -30,17 +29,11 @@ def get_model(model_config):
                                 small_inner=model_config['small_inner'] if 'small_inner' in model_config else False)
 
 
-    elif model_config['model_type'] == 'formula-net-edges':
-        return FormulaNetEdges(input_shape=model_config['vocab_size'],
+    elif model_config['model_type'] == 'gnn-encoder':
+        return GNNEncoder(input_shape=model_config['vocab_size'],
                                         embedding_dim=model_config['embedding_dim'],
                                        num_iterations=model_config['gnn_layers'],
                                         batch_norm=model_config['batch_norm'] if 'batch_norm' in model_config else True)
-
-    elif model_config['model_type'] == 'digae':
-        return DigaeEmbedding(model_config['vocab_size'],
-            model_config['embedding_dim'],
-            model_config['embedding_dim'],
-            model_config['embedding_dim'])
 
     elif model_config['model_type'] == 'gcn':
         return GCNGNN(model_config['vocab_size'],

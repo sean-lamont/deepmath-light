@@ -1,18 +1,19 @@
 import einops
 import torch
 from torch import nn
-from models.transformer.transformer_encoder_model import TransformerEmbedding
+from deepmath.models.transformer.transformer_encoder_model import TransformerEmbedding
+
 
 class AttentionRelationSmall(nn.Module):
     def __init__(self, ntoken,
                  embed_dim,
-                 edge_dim=200,
+                 edge_dim=2,
                  num_heads=8,
                  dropout=0.,
                  num_layers=4,
                  bias=False,
                  global_pool=True,
-                 edge_embed_dim=64,
+                 edge_embed_dim=128,
                  pad=True,
                  inner_dim=None,
                  **kwargs):
@@ -25,8 +26,6 @@ class AttentionRelationSmall(nn.Module):
         self.pad = pad
 
         self.num_heads = num_heads
-
-
 
         if inner_dim is not None:
             self.inner_dim = inner_dim
@@ -41,15 +40,22 @@ class AttentionRelationSmall(nn.Module):
                                                           d_hid=embed_dim, nlayers=num_layers, dropout=dropout,
                                                           enc=False, in_embed=False, global_pool=False)
 
-        if self.pad:
-            self.edge_embed = torch.nn.Embedding(edge_dim + 1, edge_embed_dim, padding_idx=0)
-        else:
-            self.edge_embed = torch.nn.Embedding(edge_dim, edge_embed_dim)
-        # self.edge_embed = torch.nn.Linear(edge_dim, edge_embed_dim)
+        self.edge_embed = nn.Sequential(nn.Embedding(edge_dim + 1, edge_embed_dim * 2, padding_idx=0),
+                                        nn.Dropout(dropout),
+                                        nn.Linear(edge_embed_dim * 2, edge_embed_dim),
+                                        nn.ReLU(),
+                                        nn.Dropout(dropout),
+                                        nn.Linear(edge_embed_dim, edge_embed_dim),
+                                        nn.ReLU())
 
         if isinstance(ntoken, int):
-            self.embedding = torch.nn.Embedding(ntoken + 1, self.inner_dim, padding_idx=0)
-            # self.embed_2 = torch.nn.Embedding(ntoken + 1, embed_dim, padding_idx=0)
+            self.embedding = nn.Sequential(nn.Embedding(ntoken + 1, self.inner_dim * 2, padding_idx=0),
+                                           nn.Dropout(dropout),
+                                           nn.Linear(self.inner_dim * 2, self.inner_dim),
+                                           nn.ReLU(),
+                                           nn.Dropout(dropout),
+                                           nn.Linear(self.inner_dim, self.inner_dim),
+                                           nn.ReLU())
         elif isinstance(ntoken, nn.Module):
             self.embedding = ntoken
         else:
@@ -57,23 +63,24 @@ class AttentionRelationSmall(nn.Module):
 
         self.scale = head_dim ** -0.5
 
-
-        self.r_proj = nn.Linear(self.inner_dim * 2 + edge_embed_dim, self.inner_dim, bias=bias)
-
-        # self.r_proj = nn.Linear(embed_dim + edge_embed_dim, embed_dim, bias=bias)
+        self.r_proj = nn.Sequential(nn.Dropout(dropout),
+                                    nn.Linear(self.inner_dim * 2 + edge_embed_dim, self.inner_dim, bias=bias),
+                                    nn.ReLU(),
+                                    nn.Linear(self.inner_dim, self.inner_dim, bias=bias),
+                                    nn.ReLU()
+                                    )
 
         self.in_proj = nn.Sequential(nn.Linear(self.inner_dim, self.inner_dim), nn.GELU())
         self.out_proj = nn.Sequential(nn.Linear(self.inner_dim, self.inner_dim), nn.GELU())
 
-        # self.r_proj = nn.Sequential(nn.Linear(embed_dim * 2 + edge_embed_dim, embed_dim, bias=bias),
-        #                             nn.ReLU(),
-        #                             nn.LayerNorm(embed_dim))
-
-
         self.cls_token = nn.Parameter(torch.randn(1, self.inner_dim))
 
-
-        self.expand_proj = nn.Sequential(nn.Linear(self.inner_dim, embed_dim), nn.GELU())
+        # 1x1 conv equivalent to linear projection in output channel
+        self.expand_proj = nn.Sequential(nn.Dropout(dropout),
+                                         nn.Linear(self.inner_dim, self.inner_dim * 4),
+                                         nn.ReLU(),
+                                         nn.Linear(self.inner_dim * 4, self.inner_dim * 8),
+                                         nn.ReLU())
 
     def forward(self,
                 data,
@@ -91,11 +98,6 @@ class AttentionRelationSmall(nn.Module):
 
         if edge_attr is not None:
             edge_attr = self.edge_embed(edge_attr)
-
-            # if multiple edge attributes, flatten them
-            if len(edge_attr.shape) > 3:
-                edge_attr = edge_attr.flatten(-2, -1)
-
             R = torch.cat([xi, edge_attr, xj], dim=-1)
         else:
             R = torch.cat([xi, xj], dim=-1)

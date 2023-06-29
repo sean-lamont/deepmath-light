@@ -13,6 +13,12 @@ from deepmath.deephol.utilities.sexpression_to_torch import sexpression_to_pyg
 from torch_geometric.data.batch import Batch
 from torch_geometric.data import Data
 
+def ptr_to_complete_edge_index(ptr):
+    # print (ptr)
+    from_lists = [torch.arange(ptr[i], ptr[i + 1]).repeat_interleave(ptr[i + 1] - ptr[i]) for i in range(len(ptr) - 1)]
+    to_lists = [torch.arange(ptr[i], ptr[i + 1]).repeat(ptr[i + 1] - ptr[i]) for i in range(len(ptr) - 1)]
+    combined_complete_edge_index = torch.vstack((torch.cat(from_lists, dim=0), torch.cat(to_lists, dim=0)))
+    return combined_complete_edge_index
 
 class HOListTrainingModule(LightningDataModule):
     def __init__(self, dir, batch_size=16):
@@ -107,10 +113,12 @@ class HOListTrainingModule(LightningDataModule):
             self.thms_ls = data['train_thm_ls']
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
+        # return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
+        return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch_relation, num_workers=2)
 
     def val_dataloader(self):
-        return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
+        # return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
+        return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch_relation, num_workers=2)
 
     def gen_batch(self, batch):
         # todo filter negative sampling to be disjoint from positive samples
@@ -131,6 +139,47 @@ class HOListTrainingModule(LightningDataModule):
         goals = Batch.from_data_list(goals)
         pos_thms = Batch.from_data_list(pos_thms)
         neg_thms = [Batch.from_data_list(th) for th in neg_thms]
+
+        goals.attention_edge_index = ptr_to_complete_edge_index(goals.ptr)
+        pos_thms.attention_edge_index = ptr_to_complete_edge_index(pos_thms.ptr)
+
+        for i,th in enumerate(neg_thms):
+            neg_thms[i].attention_edge_index = ptr_to_complete_edge_index(th.ptr)
+
+        return goals, tacs, pos_thms, neg_thms
+
+    def gen_batch_relation(self, batch):
+        # todo filter negative sampling to be disjoint from positive samples
+        # batch will be a list of proof step dictionaries with goal, thms, tactic_id
+        goals = [self.torch_dict[x['goal']] for x in batch]
+
+        # select random positive sample
+        # if no parameters set it as a single element with '1' mapping to special token for no parameters
+        pos_thms = [self.torch_dict[random.choice(x['thms'])] if len(x['thms']) > 0
+                    else Data(x=torch.LongTensor([1]), edge_index=torch.LongTensor([[], []]), edge_attr=torch.LongTensor([]))
+                    for x in batch]
+        tacs = torch.LongTensor([x['tac_id'] for x in batch])
+
+        # 15 random negative samples per goal
+        neg_thms = [[self.torch_dict[a] for a in random.sample(self.thms_ls, 15)] for _ in goals]
+
+        def data_to_relation(data_list):
+            xi = [torch.LongTensor([data.x[i] for i in data.edge_index[0]]) + 1 for data in data_list]
+            xj = [torch.LongTensor([data.x[i] for i in data.edge_index[1]]) + 1 for data in data_list]
+            edge_attr = [data.edge_attr for data in data_list]
+
+            xi = torch.nn.utils.rnn.pad_sequence(xi)
+            xj = torch.nn.utils.rnn.pad_sequence(xj)
+            edge_attr = torch.nn.utils.rnn.pad_sequence(edge_attr)
+
+            mask = (xi == 0).T
+            mask = torch.cat([mask, torch.zeros(mask.shape[0]).bool().unsqueeze(1)], dim=1)
+
+            return Data(xi=xi, xj=xj, edge_attr_=edge_attr, mask=mask)
+
+        goals = data_to_relation(goals)
+        pos_thms = data_to_relation(pos_thms)
+        neg_thms = [data_to_relation(th) for th in neg_thms]
 
         return goals, tacs, pos_thms, neg_thms
 
