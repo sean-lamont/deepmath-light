@@ -9,7 +9,7 @@ from deepmath.models.tactic_predictor import TacticPrecdictor, CombinerNetwork
 
 if __name__ == "__main__":
     NUM_TOKENS = 2044 + 5
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARNING)
 
     model_config = {
         # "model_type": "transformer_relation",

@@ -124,7 +124,7 @@ class HOListTraining_(pl.LightningModule):
         try:
             tac_preds, pos_scores, neg_scores, extra_neg_scores = self(goals, pos_thms, neg_thms, true_tacs)
         except Exception as e:
-            logging.warning(f"Error in forward: {e}")
+            logging.debug(f"Error in forward: {e}")
             return
 
         loss = self.loss_func(tac_preds, true_tacs,
@@ -132,7 +132,7 @@ class HOListTraining_(pl.LightningModule):
                               extra_neg_scores)
 
         if not torch.isfinite(loss):
-            logging.warning(f"Loss error: {loss}")
+            logging.debug(f"Loss error: {loss}")
             return
 
         self.log("loss", loss, batch_size=self.batch_size, prog_bar=True)
@@ -143,8 +143,7 @@ class HOListTraining_(pl.LightningModule):
         try:
             tac_preds, pos_scores, neg_scores, extra_neg_scores = self(goals, pos_thms, neg_thms, true_tacs)
         except Exception as e:
-            logging.debug(traceback.print_exc())
-            logging.warning(f"Error in forward: {e}")
+            logging.debug(f"Error in forward: {e}")
             return
 
         # get accuracy wrt true
@@ -162,4 +161,4 @@ class HOListTraining_(pl.LightningModule):
         try:
             loss.backward()
         except Exception as e:
-            logging.warning(f"Error in backward: {e}")
+            logging.debug(f"Error in backward: {e}")
