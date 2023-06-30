@@ -80,8 +80,14 @@ class HOListTraining_(pl.LightningModule):
 
     def val_func(self, tac_pred, true_tac, pos_premise_scores, neg_premise_scores, extra_neg_premise_scores):
         # todo weighted tactics and topk?
-        tac_pred = torch.argmax(tac_pred, dim=1)
-        tac_acc = torch.sum(tac_pred == true_tac) / tac_pred.shape[0]
+
+        # tac_pred = torch.argmax(tac_pred, dim=1)
+        tac_acc = torch.sum(torch.argmax(tac_pred, dim=1) == true_tac) / tac_pred.shape[0]
+        topk_preds = torch.topk(tac_pred, k=5, dim=1).indices
+        topk_acc = sum([1 if torch.isin(tac_pred[i], topk_preds[i])[0] else 0 for i in range(tac_pred.shape[0])]) / tac_pred.shape[0]
+
+
+
 
         neg_premise_scores = torch.cat([neg_premise_scores, extra_neg_premise_scores], dim=1)
         pos_premise_scores_dupe = einops.repeat(pos_premise_scores, 'b 1 -> b k',
@@ -94,7 +100,7 @@ class HOListTraining_(pl.LightningModule):
         neg_acc = torch.sum(torch.sigmoid(neg_premise_scores) < 0.5) / (
                     neg_premise_scores.shape[0] * neg_premise_scores.shape[1])
 
-        return tac_acc, rel_param_acc, pos_acc, neg_acc
+        return tac_acc, rel_param_acc, pos_acc, neg_acc, topk_acc
 
     def forward(self, goals, pos_thms, neg_thms, true_tacs):
         goals = self.embedding_model_goal(goals).unsqueeze(1)
@@ -147,9 +153,9 @@ class HOListTraining_(pl.LightningModule):
             return
 
         # get accuracy wrt true
-        tac_acc, rel_param_acc, pos_acc, neg_acc = self.val_func(tac_preds, true_tacs, pos_scores, neg_scores,
+        tac_acc, rel_param_acc, pos_acc, neg_acc, topk_acc = self.val_func(tac_preds, true_tacs, pos_scores, neg_scores,
                                                                  extra_neg_scores)
-        self.log_dict({'tac_acc': tac_acc, 'rel_param_acc': rel_param_acc, 'pos_acc': pos_acc, 'neg_acc': neg_acc},
+        self.log_dict({'tac_acc': tac_acc, 'rel_param_acc': rel_param_acc, 'pos_acc': pos_acc, 'neg_acc': neg_acc, 'topk_acc':topk_acc},
                       batch_size=self.batch_size, prog_bar=True)
         return
 

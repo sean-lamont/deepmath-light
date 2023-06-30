@@ -113,12 +113,12 @@ class HOListTrainingModule(LightningDataModule):
             self.thms_ls = data['train_thm_ls']
 
     def train_dataloader(self):
-        # return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
-        return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch_relation, num_workers=2)
+        return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
+        # return DataLoader(self.train_data, batch_size=self.batch_size, collate_fn=self.gen_batch_relation, num_workers=2)
 
     def val_dataloader(self):
-        # return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
-        return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch_relation, num_workers=2)
+        return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch)
+        # return DataLoader(self.val_data, batch_size=self.batch_size, collate_fn=self.gen_batch_relation, num_workers=2)
 
     def gen_batch(self, batch):
         # todo filter negative sampling to be disjoint from positive samples
