@@ -84,11 +84,7 @@ class HOListTraining_(pl.LightningModule):
         # tac_pred = torch.argmax(tac_pred, dim=1)
         tac_acc = torch.sum(torch.argmax(tac_pred, dim=1) == true_tac) / tac_pred.shape[0]
         topk_preds = torch.topk(tac_pred, k=5, dim=1).indices
-        topk_acc = sum([1 if torch.isin(tac_pred[i], topk_preds[i])[0] else 0 for i in range(tac_pred.shape[0])]) / tac_pred.shape[0]
-
-
-
-
+        topk_acc = sum([1 if torch.isin(true_tac[i], topk_preds[i]) else 0 for i in range(tac_pred.shape[0])]) / tac_pred.shape[0]
         neg_premise_scores = torch.cat([neg_premise_scores, extra_neg_premise_scores], dim=1)
         pos_premise_scores_dupe = einops.repeat(pos_premise_scores, 'b 1 -> b k',
                                                 k=neg_premise_scores.shape[-1])

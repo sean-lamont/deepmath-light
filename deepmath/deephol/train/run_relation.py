@@ -9,7 +9,8 @@ from deepmath.models.tactic_predictor import TacticPrecdictor, CombinerNetwork
 
 if __name__ == "__main__":
     NUM_TOKENS = 2044 + 5
-    logging.basicConfig(level=logging.WARNING)
+    # logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.DEBUG)
 
     model_config = {
         # "model_type": "transformer_relation",
@@ -43,7 +44,7 @@ if __name__ == "__main__":
                          config=model_config,
                          # notes=self.config['notes'],
                          # log_model="all",
-                         # offline=True,
+                         offline=True,
                          )
     trainer = pl.Trainer(enable_progress_bar=True,devices=[0], val_check_interval=2048, limit_val_batches=512, logger=logger)
     trainer.fit(model=experiment, datamodule=module)
