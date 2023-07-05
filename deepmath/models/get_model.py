@@ -3,10 +3,11 @@ from deepmath.models.gnn.formula_net.gnn_encoder import GNNEncoder
 from deepmath.models.sat.models import GraphTransformer
 from deepmath.models.gnn.pna import GCNGNN, DiGCNGNN
 
-
 '''
 Utility function to fetch model given a configuration dict
 '''
+
+
 def get_model(model_config):
     if model_config['model_type'] == 'sat':
         return GraphTransformer(in_size=model_config['vocab_size'],
@@ -26,33 +27,20 @@ def get_model(model_config):
                                 k_hop=model_config['gnn_layers'],
                                 small_inner=model_config['small_inner'] if 'small_inner' in model_config else False)
 
-
     elif model_config['model_type'] == 'gnn-encoder':
         return GNNEncoder(input_shape=model_config['vocab_size'],
-                                        embedding_dim=model_config['embedding_dim'],
-                                       num_iterations=model_config['gnn_layers'],
-                                        batch_norm=model_config['batch_norm'] if 'batch_norm' in model_config else True)
-
-    elif model_config['model_type'] == 'gcn':
-        return GCNGNN(model_config['vocab_size'],
-                      model_config['embedding_dim'],
-                      model_config['gnn_layers'],
-                      )
-
-    elif model_config['model_type'] == 'di_gcn':
-        return DiGCNGNN(model_config['vocab_size'],
-                      model_config['embedding_dim'],
-                      model_config['gnn_layers'],
-                      )
+                          embedding_dim=model_config['embedding_dim'],
+                          num_iterations=model_config['gnn_layers'],
+                          dropout=model_config['dropout'])
 
     elif model_config['model_type'] == 'transformer':
         return TransformerWrapper(ntoken=model_config['vocab_size'],
-                                    d_model=model_config['embedding_dim'],
-                                    nhead=model_config['num_heads'],
-                                    nlayers=model_config['num_layers'],
-                                    dropout=model_config['dropout'],
-                                    d_hid=model_config['dim_feedforward'],
-                                    small_inner = model_config['small_inner'] if 'small_inner' in model_config else False)
+                                  d_model=model_config['embedding_dim'],
+                                  nhead=model_config['num_heads'],
+                                  nlayers=model_config['num_layers'],
+                                  dropout=model_config['dropout'],
+                                  d_hid=model_config['dim_feedforward'],
+                                  small_inner=model_config['small_inner'] if 'small_inner' in model_config else False)
 
     else:
         raise NotImplementedError

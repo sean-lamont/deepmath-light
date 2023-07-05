@@ -23,22 +23,10 @@ if __name__ == "__main__":
     }
 
     embedding_model_config = {
-        "model_type": "sat",
-        # 'gnn_type': 'di_gcn',
-        "num_edge_features": 3,
+        "model_type": "gnn-encoder",
         "vocab_size": NUM_TOKENS,
-        "embedding_dim": 256,
-        "dim_feedforward": 256,
-        "num_heads": 4,
-        "num_layers": 4,
-        "in_embed": True,
-        "se": "gnn-encoder",
-        "abs_pe": False,
-        "abs_pe_dim": 256,
-        "use_edge_attr": True,
+        "embedding_dim": 128,
         "dropout": 0.5,
-        "gnn_layers": 4,
-        'small_inner': True
     }
 
     experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)

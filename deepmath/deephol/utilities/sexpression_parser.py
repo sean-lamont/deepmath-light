@@ -1,4 +1,4 @@
-"""A minimal SExp,ession parser for terms, goals, and theorems from HOL Light.
+"""A minimal SExpession parser for terms, goals, and theorems from HOL Light.
 
 Assumes SExpressions of the form '(word1 word1 (word1) () (() ()))'.
 That is, spaces and parantheses are treated as separators, bare words are
@@ -51,7 +51,7 @@ def end_of_child(sexp: Text, start: int) -> int:
   """Returns the index of the end of the word + 1."""
   if not is_start_of_word(sexp, start):
     raise SExpParseError(
-        'end_of_child must be called at begginning of a word (pos %d)' % start)
+        'end_of_child must be called at beginning of a word (pos %d)' % start)
   if sexp[start] == '(':
     parenthesis_counter = 0
     for idx, c in enumerate(sexp[start:]):
@@ -69,7 +69,7 @@ def validate_parens(sexp: Text):
   """Counts the opening and closing parantheses."""
   if sexp[0] != '(' or sexp[-1] != ')':
     raise SExpParseError(
-        'SExpressions must start and end with parantheses: %s' % sexp)
+        'SExpressions must start and end with parentheses: %s' % sexp)
   parenthesis_counter = 0
   for idx, c in enumerate(sexp):
     if c == '(':
@@ -81,7 +81,7 @@ def validate_parens(sexp: Text):
           'Closing parenthesis before end of expression at pos %d' % idx)
   if parenthesis_counter > 0:
     raise SExpParseError(
-        'Expression not closed; not enough closing parantheses: %s' % sexp)
+        'Expression not closed; not enough closing parentheses: %s' % sexp)
 
 
 def is_bare_word(sexp: Text):
