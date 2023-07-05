@@ -1,7 +1,5 @@
 from deepmath.models.transformer.transformer_encoder_model import TransformerWrapper
 from deepmath.models.gnn.formula_net.gnn_encoder import GNNEncoder
-from deepmath.models.relation_transformer.relation_transformer_new import AttentionRelations
-from deepmath.models.relation_transformer.relation_transformer_small import AttentionRelationSmall
 from deepmath.models.sat.models import GraphTransformer
 from deepmath.models.gnn.pna import GCNGNN, DiGCNGNN
 
@@ -56,21 +54,5 @@ def get_model(model_config):
                                     d_hid=model_config['dim_feedforward'],
                                     small_inner = model_config['small_inner'] if 'small_inner' in model_config else False)
 
-    elif model_config['model_type'] == 'transformer_relation':
-        return AttentionRelations(ntoken=model_config['vocab_size'],
-                                  dropout=model_config['dropout'] if 'dropout' in model_config else 0.0,
-                                  num_heads=model_config['num_heads'] if 'num_heads' in model_config else 8,
-                                  num_layers=model_config['num_layers'] if 'num_layers' in model_config else 4,
-                                  embed_dim=model_config['embedding_dim'])
-
-    elif model_config['model_type'] == 'transformer_relation_small':
-        return AttentionRelationSmall(ntoken=model_config['vocab_size'],
-                                  dropout=model_config['dropout'] if 'dropout' in model_config else 0.0,
-                                  num_heads=model_config['num_heads'] if 'num_heads' in model_config else 8,
-                                  num_layers=model_config['num_layers'] if 'num_layers' in model_config else 4,
-                                  embed_dim=model_config['embedding_dim'])
-
-    elif model_config['model_type'] == 'classifier':
-        raise NotImplementedError
     else:
-        return None
+        raise NotImplementedError
