@@ -1,31 +1,27 @@
-"""Converter from ProofLog proto to a tf Example."""
-
-# todo make this convert into torch dataset.
-# todo figure out how hard negatives work, looks like they're set in prune_lib when they give a different subgoal than what was successful
-# todo where do they augment with random negatives for training????
+"""Converter from ProofLog proto to a dictionary with goals, tactics and parameters."""
 
 from __future__ import absolute_import
 from __future__ import division
 # Import Type Annotations
 from __future__ import print_function
-import tensorflow as tf
-from tf import logging
-from typing import Dict, Iterable, List, Optional, Text, Tuple
+
+import logging
+from typing import Dict, List, Optional, Text, Tuple
+
 from deepmath.deephol import deephol_pb2
 from deepmath.deephol import io_util
 from deepmath.deephol import theorem_fingerprint as fp
 from deepmath.deephol.deephol_loop import options_pb2
 from deepmath.proof_assistant import proof_assistant_pb2
 
-BYTES_FEATURE_ENCODING = 'utf-8'
 
-
-class ProofLogToTFExample(object):
-  """TFExampleFormat.HOLPARAM conversion to TFExamples."""
+class ProofLogToExamples(object):
+  """Class for conversion from prooflog protobuf format to examples"""
 
   def __init__(self, tactic_name_id_map: Dict[Text, int],
                theorem_database: proof_assistant_pb2.TheoremDatabase,
                options: options_pb2.ConvertorOptions):
+
     """Initializer.
 
     Arguments:
@@ -69,15 +65,6 @@ class ProofLogToTFExample(object):
           (theorem.training_split == proof_assistant_pb2.Theorem.VALIDATION and
            scrub_validsplit_parameters)):
         self.forbidden_parameters.add(fp.Fingerprint(theorem))
-
-  def _int64_feature(self, ints):
-    return tf.train.Feature(int64_list=tf.train.Int64List(value=ints))
-
-  def _bytes_feature(self, strings: Iterable[Text]):
-    return tf.train.Feature(
-        bytes_list=tf.train.BytesList(
-            value=[s.encode(encoding=BYTES_FEATURE_ENCODING) for s in strings]))
-
   def _get_parameter_conclusion(self,
                                 parameter: proof_assistant_pb2.Theorem) -> Text:
     """Get conclusion from fingerprint (prioritized), or one in theorem."""
@@ -130,59 +117,42 @@ class ProofLogToTFExample(object):
       ]
     return theorems, hard_negatives
 
-  def _get_thm_features(self, theorem_parameters: List[Text]
-                       ) -> Dict[Text, tf.train.Feature]:
-    """Constructs the features for the theorem parameters.
-
-    Args:
-      theorem_parameters: A list of sexpressions that represents the theorem
-        arguments.
-
-    Returns:
-      A dictionary that maps the names of the features to tf.train.Feature
-      objects.
-    """
-    thm_features = {
-        # theorem parameters in tactic application
-        'thms': self._bytes_feature(theorem_parameters),
-    }
-    return thm_features
-
   def _proof_step_features(self, goal_proto: proof_assistant_pb2.Theorem,
                            tactic_application: deephol_pb2.TacticApplication
-                          ) -> Dict[Text, tf.train.Feature]:
+                          ) -> Dict:
     """Compute the basic features of a proof step (goal, tactic, and args)."""
     # preprocessed goal's conclusion's features
-    features = {'goal': self._bytes_feature([goal_proto.conclusion])}
+    features = {'goal': goal_proto.conclusion}
     tactic_id = self.tactic_name_id_map[tactic_application.tactic]
     theorem_parameters, hard_negatives = self._extract_theorem_parameters(
         tactic_application)
-    features.update(self._get_thm_features(theorem_parameters))
+    features.update({'thms': theorem_parameters})
+
     features.update({
         # preprocessed goal's hypotheses
-        'goal_asl': self._bytes_feature(goal_proto.hypotheses),
+        'goal_asl': goal_proto.hypotheses,
         # tactic id of tactic application
-        'tac_id': self._int64_feature([tactic_id]),
+        'tac_id': tactic_id,
         # Hard (high scoring) negative examples for the parameters that were
         # selected specifically to train against.
-        'thms_hard_negatives': self._bytes_feature(hard_negatives),
+        'thms_hard_negatives': hard_negatives,
     })
+
     return features
 
   def process_proof_step(self, goal_proto: proof_assistant_pb2.Theorem,
                          tactic_application: deephol_pb2.TacticApplication
-                        ) -> Optional[tf.train.Example]:
-    """Convert goal,tactic pair to TFExample (for closed goal) or None."""
+                        ):
+    """Convert goal,tactic pair to feature dict (for closed goal) or None."""
     if not tactic_application.closed:
       return None
-    features = self._proof_step_features(goal_proto, tactic_application)
-    return tf.train.Example(features=tf.train.Features(feature=features))
+    return self._proof_step_features(goal_proto, tactic_application)
 
   def process_proof_node(self, proof_node: deephol_pb2.ProofNode):
     for tactic_application in proof_node.proofs:
-      tfexample = self.process_proof_step(proof_node.goal, tactic_application)
-      if tfexample is not None:
-        yield tfexample
+      example = self.process_proof_step(proof_node.goal, tactic_application)
+      if example is not None:
+        yield example
 
   def process_proof_log(self, proof_log: deephol_pb2.ProofLog):
     for proof_node in proof_log.nodes:
@@ -195,7 +165,7 @@ class ProofLogToTFExample(object):
         yield example
 
   def to_negative_example(self, negative_theorem: proof_assistant_pb2.Theorem
-                         ) -> tf.train.Example:
+                         ):
     raise NotImplementedError(
         'to_negative_example not implemented for base class.')
 
@@ -203,8 +173,8 @@ class ProofLogToTFExample(object):
 def create_processor(
     options: options_pb2.ConvertorOptions,
     theorem_database: Optional[proof_assistant_pb2.TheoremDatabase] = None,
-    tactics: Optional[List[deephol_pb2.Tactic]] = None) -> ProofLogToTFExample:
-  """Factory function for ProofLogToTFExample."""
+    tactics: Optional[List[deephol_pb2.Tactic]] = None) -> ProofLogToExamples:
+  """Factory function for ProofLogToTorch."""
 
   if theorem_database and options.theorem_database_path:
     raise ValueError(
@@ -228,6 +198,8 @@ def create_processor(
         'MESON_TAC': 11,
         'CHOOSE_TAC': 34,
     })
+
   if options.format != options_pb2.ConvertorOptions.HOLPARAM:
     raise ValueError('Unknown options_pb2.ConvertorOptions.TFExampleFormat.')
-  return ProofLogToTFExample(tactics_name_id_map, theorem_database, options)
+
+  return ProofLogToExamples(tactics_name_id_map, theorem_database, options)

@@ -1,11 +1,10 @@
 from deepmath.deephol.utilities.sexpression_graphs import SExpressionGraph
 from deepmath.deephol.utilities import sexpression_graphs
+from typing import Text
+import logging
 
-from typing import Dict, Text
-import torch
-from torch_geometric.data import Data
 
-def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
+def sexpression_to_graph(sexpression_txt: Text):
     sexpression = SExpressionGraph(sexpression_txt)
 
     edges = []
@@ -14,13 +13,12 @@ def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
     def process_sexpression_graph(node, depth):
         node_id = sexpression_graphs.to_node_id(node)
 
-        # or check with is_leaf_node?..
         if len(sexpression.get_children(node)) == 0:
             if node_id not in node_to_tok:
                 node_to_tok[node_id] = node
             assert sexpression.is_leaf_node(node_id)
 
-        for i,child in enumerate(sexpression.get_children(node)):
+        for i, child in enumerate(sexpression.get_children(node)):
             if i == 0:
                 node_to_tok[node_id] = sexpression.to_text(child)
                 continue
@@ -28,6 +26,9 @@ def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
             edges.append((node_id, child, i))
             process_sexpression_graph(sexpression.to_text(child), depth + 1)
 
+    if len(sexpression.roots()) > 1:
+        logging.warning(
+            f"Multiple roots for {sexpression_txt}: {[sexpression.to_text(sexpression.roots()[i]) for i in sexpression.roots()]}")
 
     process_sexpression_graph(sexpression.to_text(sexpression.roots()[0]), 0)
 
@@ -41,22 +42,14 @@ def sexpression_to_pyg(sexpression_txt: Text, vocab: Dict) -> Data:
     receivers = [all_nodes.index(i) for i in receivers]
 
     node_to_tok_ = {}
-    for k,v in node_to_tok.items():
+    for k, v in node_to_tok.items():
         node_to_tok_[all_nodes.index(k)] = v
 
     assert len(node_to_tok_) == len(all_nodes)
 
     tok_list = [0 for _ in range(len(all_nodes))]
 
-    for k,v in node_to_tok_.items():
+    for k, v in node_to_tok_.items():
         tok_list[k] = v
 
-
-    edge_index = torch.LongTensor([senders,receivers])
-    edge_attr = torch.LongTensor(edge_attr)
-
-    x = torch.LongTensor([vocab[tok] if tok in vocab else vocab['UNK'] for tok in tok_list])
-
-    return Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
-
-
+    return {'tokens': tok_list, 'edge_index': [senders, receivers], 'edge_attr': edge_attr}

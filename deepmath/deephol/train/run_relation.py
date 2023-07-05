@@ -2,14 +2,13 @@ import logging
 import lightning.pytorch as pl
 import torch
 from lightning.pytorch.loggers import WandbLogger
-from deepmath.deephol.deephol_loop import torch_training_module
-from deepmath.deephol.deephol_loop.torch_data_module import HOListTrainingModule
+from deepmath.deephol.train import torch_training_module
+from deepmath.deephol.train.torch_data_module import HOListGraphModule
 from deepmath.models.get_model import get_model
 from deepmath.models.tactic_predictor import TacticPrecdictor, CombinerNetwork
 
 if __name__ == "__main__":
     NUM_TOKENS = 2044 + 5
-    # logging.basicConfig(level=logging.WARNING)
     logging.basicConfig(level=logging.DEBUG)
 
     model_config = {
@@ -30,7 +29,7 @@ if __name__ == "__main__":
     tac_model = TacticPrecdictor(embedding_dim=1024, num_tactics=41)
     combiner_model = CombinerNetwork(embedding_dim=1024, num_tactics=41, tac_embed_dim=128)
 
-    module = HOListTrainingModule('/home/sean/Documents/phd/deepmath-light/deepmath/train_data_new/', batch_size=16)
+    module = HOListGraphModule('/home/sean/Documents/phd/deepmath-light/deepmath/train_data_new/', batch_size=16)
 
     torch.set_float32_matmul_precision('medium')
     experiment = torch_training_module.HOListTraining_(embedding_model_goal=embedding_model_goal,
