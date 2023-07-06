@@ -4,13 +4,17 @@ import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
 from deepmath.deephol.train import torch_training_module
 from deepmath.deephol.train.sequence_datamodule import HOListSequenceModule
+from deepmath.deephol.train.graph_datamodule import HOListGraphModule
 from deepmath.models.get_model import get_model
 from deepmath.models.tactic_predictor import TacticPrecdictor, CombinerNetwork
 
 
 class ExperimentRunner:
     def __init__(self, exp_config, embedding_model_config):
-        self.data_module = HOListSequenceModule(dir=exp_config['data_dir'], batch_size=exp_config['batch_size'])
+        if exp_config['data_type'] == 'sequence':
+            self.data_module = HOListSequenceModule(dir=exp_config['data_dir'], batch_size=exp_config['batch_size'])
+        else:
+            self.data_module = HOListGraphModule(dir=exp_config['data_dir'], batch_size=exp_config['batch_size'])
 
         self.experiment = torch_training_module.HOListTraining_(embedding_model_goal=get_model(embedding_model_config),
                                                                 embedding_model_premise=get_model(embedding_model_config),
@@ -42,11 +46,14 @@ class ExperimentRunner:
 
         self.callbacks.append(checkpoint_callback)
 
+
+        batch_scale = (16 // exp_config['batch_size'])
         self.trainer = pl.Trainer(enable_progress_bar=True,
+                                  log_every_n_steps=50 * batch_scale,
                                   max_epochs=exp_config['epochs'],
                                   devices=exp_config['device'],
-                                  val_check_interval=exp_config['val_frequency'],
-                                  limit_val_batches=exp_config['val_size'],
+                                  val_check_interval=exp_config['val_frequency'] * batch_scale,
+                                  limit_val_batches=exp_config['val_size'] * batch_scale,
                                   logger=self.logger,
                                   callbacks=self.callbacks)
 

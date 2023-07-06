@@ -1,4 +1,7 @@
 import logging
+from deepmath.deephol.utilities.sexpression_graphs import SExpressionGraph
+import os.path
+
 import torch
 import random
 from torch.utils.data import DataLoader
@@ -12,7 +15,23 @@ def tokenize_string(string):
     tokens = [token for token in tokens if token.strip()]  # Remove empty tokens
     return tokens
 
-def collate_and_pad_sequence(data_list, max_seq_len=1000):
+def sexpression_to_polish(sexpression_text):
+    sexpression = SExpressionGraph()
+    sexpression.add_sexp(sexpression_text)
+    out = []
+
+    def process_node(node):
+        if len(sexpression.get_children(node)) == 0:
+            out.append(node)
+        for i, child in enumerate(sexpression.get_children(node)):
+            if i == 0:
+                out.append(sexpression.to_text(child))
+                continue
+            process_node(sexpression.to_text(child))
+
+    process_node(sexpression.to_text(sexpression.roots()[0]))
+    return out
+def collate_and_pad_sequence(data_list, max_seq_len=3000):
     x = torch.nn.utils.rnn.pad_sequence(data_list)
     x = x[:max_seq_len]
     mask = (x == 0).T
@@ -23,6 +42,12 @@ def collate_and_pad_sequence(data_list, max_seq_len=1000):
 Data module returning a sequence for vanilla Transformer encoders
 """
 
+from pymongo import MongoClient
+
+client = MongoClient()
+db = client['holist']
+expr_collection = db['expression_graphs']
+
 
 class HOListSequenceModule(LightningDataModule):
     def __init__(self, dir, batch_size):
@@ -31,14 +56,23 @@ class HOListSequenceModule(LightningDataModule):
         self.batch_size = batch_size
 
     def load(self):
-        return torch.load(self.dir)
+        self.vocab = torch.load(self.dir + 'vocab.pt')
+        # self.expr_dict = torch.load(self.dir + 'expr_dict.pt')
+
+        logging.info("Loading expressions..")
+        if os.path.exists(self.dir + 'sequence_dict.pt'):
+            self.sequence_dict = torch.load(self.dir + 'sequence_dict.pt')
+        else:
+            self.expr_list = [k["_id"] for k in tqdm(expr_collection.find({}))]
+
+        self.train_data = torch.load(self.dir + 'train_data.pt')
+        self.val_data = torch.load(self.dir + 'val_data.pt')
+        self.thm_ls = torch.load(self.dir + 'train_thm_ls.pt')
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
             logging.info("Loading data..")
-            logging.info("Filtering data..")
-            data = self.load()
-            self.vocab = data['vocab']
+            self.load()
 
             # add brackets to vocab for sequence model
             if '(' not in self.vocab:
@@ -47,13 +81,23 @@ class HOListSequenceModule(LightningDataModule):
             if ')' not in self.vocab:
                 self.vocab[')'] = len(self.vocab)
 
-            logging.info("Generating sequence dictionary..")
-            self.sequence_dict = {k: torch.LongTensor([self.vocab[tok] if tok in self.vocab else self.vocab['UNK']])
-                                  for k in tqdm(data['expr_dict'].keys()) for tok in tokenize_string(k)}
 
-            self.train_data = self.filter(data['train_data'])
-            self.val_data = self.filter(data['val_data'])
-            self.thms_ls = [d for d in data['train_thm_ls'] if d in self.sequence_dict]
+            if not os.path.exists(self.dir + 'sequence_dict.pt'):
+                logging.info("Generating sequence dictionary..")
+                # self.sequence_dict = {k: [self.vocab[tok] if tok in self.vocab else self.vocab['UNK']for tok in tokenize_string(k)]
+                #                   for k in tqdm(self.expr_list)}
+
+                self.sequence_dict = {k: [self.vocab[tok] if tok in self.vocab else self.vocab['UNK']for tok in sexpression_to_polish(k)]
+                                      for k in tqdm(self.expr_list)}
+
+                torch.save(self.sequence_dict, self.dir + 'sequence_dict_polished.pt')
+
+
+            self.sequence_dict = {k: torch.LongTensor(v) for k,v in self.sequence_dict.items()}
+
+            self.train_data = self.filter(self.train_data)
+            self.val_data = self.filter(self.val_data)
+            self.thms_ls = [d for d in self.thm_ls if d in self.sequence_dict]
 
     def filter(self, data):
         def process(d):
@@ -102,11 +146,12 @@ class HOListSequenceModule(LightningDataModule):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    module = HOListSequenceModule(dir='/home/sean/Documents/phd/deepmath-light/deepmath/new_data_/data.pt',
+    module = HOListSequenceModule(dir='/home/sean/Documents/phd/deepmath-light/deepmath/processed_train_data/',
                                   batch_size=16)
-    # module.setup("fit")
+    module.setup("fit")
     #
     # loader = module.train_dataloader()
+    # print (next(iter(loader)))
     # i = 0
     # for b in tqdm(loader):
     #     i += 1

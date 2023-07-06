@@ -7,7 +7,7 @@ import einops
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 2049):
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 4096):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 
@@ -47,13 +47,28 @@ class TransformerWrapper(nn.Module):
 
         if self.small_inner:
             d_model = d_model // 2
-            self.expand_proj = nn.Sequential(nn.Linear(d_model, d_model * 2), nn.GELU())
+
+            self.expand_proj = nn.Sequential(nn.Dropout(dropout),
+                                          nn.Linear(d_model, d_model * 4),
+                                          nn.ReLU(),
+                                          nn.Linear(d_model * 4, d_model * 8),
+                                          nn.ReLU())
+
+            # self.expand_proj = nn.Sequential(nn.Linear(d_model, d_model * 2), nn.GELU())
 
         self.transformer_embedding = TransformerEmbedding(ntoken=None, d_model=d_model, nhead=nhead, d_hid=d_hid,
                                                           nlayers=nlayers, dropout=dropout, enc=enc,
                                                           global_pool=False, in_embed=in_embed)
 
-        self.embedding = nn.Embedding(ntoken, d_model, padding_idx=0)
+        self.embedding = nn.Sequential(nn.Embedding(ntoken, d_model * 2),
+                                             nn.Dropout(dropout),
+                                             nn.Linear(d_model * 2, d_model),
+                                             nn.ReLU(),
+                                             nn.Dropout(dropout),
+                                             nn.Linear(d_model, d_model),
+                                             nn.ReLU())
+
+        # self.embedding = nn.Embedding(ntoken, d_model, padding_idx=0)
 
         self.cls_token = nn.Parameter(torch.randn(1, d_model))
 

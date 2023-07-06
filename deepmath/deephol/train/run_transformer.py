@@ -6,15 +6,16 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     exp_config = {
+        "data_type": "sequence",
         "project": "HOList Pretrain",
-        "name": "Transformer",
+        "name": "Transformer Polished",
         "learning_rate": 1e-4,
         "epochs": 20,
         "weight_decay": 1e-6,
-        "batch_size": 16,
+        "batch_size": 2,
         "val_size": 512,
         "checkpoint_dir": "/home/sean/Documents/phd/deepmath-light/deepmath/train/",
-        "data_dir": '/home/sean/Documents/phd/deepmath-light/deepmath/attention_train_data/',
+        "data_dir": '/home/sean/Documents/phd/deepmath-light/deepmath/processed_train_data/',
         "device": [0],
         "val_frequency": 2048,
         "num_tactics": 41,
@@ -35,3 +36,11 @@ if __name__ == "__main__":
 
     experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
     experiment.run()
+
+    exp_config['name'] = "Transformer Full Sequence"
+
+
+    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    experiment.run()
+
+
