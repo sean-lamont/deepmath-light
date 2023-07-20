@@ -8,7 +8,7 @@ if __name__ == "__main__":
     exp_config = {
         'data_type': 'graph',
         "project": "HOList Pretrain",
-        "name": "SAT Directed Attention",
+        "name": "SAT",
         "learning_rate": 1e-4,
         "epochs": 10,
         "weight_decay": 1e-6,
@@ -28,84 +28,84 @@ if __name__ == "__main__":
         # 'gnn_type': 'di_gcn',
         "num_edge_features": 3,
         "vocab_size": NUM_TOKENS,
-        "embedding_dim": 256,
+        "embedding_dim": 128,
         "dim_feedforward": 256,
-        "num_heads": 1,
-        "num_layers": 1,
+        "num_heads": 4,
+        "num_layers": 4,
         "in_embed": True,
         "se": "gnn-encoder",
         "abs_pe": False,
         "abs_pe_dim": 256,
         "use_edge_attr": True,
-        "dropout": 0.5,
-        "gnn_layers": 4,
-        'small_inner': True
+        "dropout": 0.2,
+        "gnn_layers": 1,
+        'small_inner': False
     }
 
     experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
     experiment.run()
-
-
-    embedding_model_config['num_heads'] = 2
-    embedding_model_config['num_layers'] = 4
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-
-    embedding_model_config['num_heads'] = 2
-    embedding_model_config['num_layers'] = 8
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-
-    embedding_model_config['num_heads'] = 2
-    embedding_model_config['num_layers'] = 4
-    embedding_model_config['gnn_layers'] = 0
-
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-    embedding_model_config['num_heads'] = 1
-    embedding_model_config['num_layers'] = 1
-    embedding_model_config['gnn_layers'] = 0
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-
-    embedding_model_config['num_heads'] = 1
-    embedding_model_config['num_layers'] = 1
-    embedding_model_config['gnn_layers'] = 12
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-    embedding_model_config['num_heads'] = 1
-    embedding_model_config['num_layers'] = 1
-    embedding_model_config['gnn_layers'] = 4
-    embedding_model_config['dropout'] = 0
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-    embedding_model_config['num_heads'] = 1
-    embedding_model_config['num_layers'] = 1
-    embedding_model_config['gnn_layers'] = 4
-    embedding_model_config['dropout'] = 0.2
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-    embedding_model_config['num_heads'] = 2
-    embedding_model_config['num_layers'] = 2
-    embedding_model_config['gnn_layers'] = 4
-    embedding_model_config['dropout'] = 0.2
-
-    experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
-    experiment.run()
-
-
-
+    #
+    #
+    # embedding_model_config['num_heads'] = 2
+    # embedding_model_config['num_layers'] = 4
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    #
+    # embedding_model_config['num_heads'] = 2
+    # embedding_model_config['num_layers'] = 8
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    #
+    # embedding_model_config['num_heads'] = 2
+    # embedding_model_config['num_layers'] = 4
+    # embedding_model_config['gnn_layers'] = 0
+    #
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    # embedding_model_config['num_heads'] = 1
+    # embedding_model_config['num_layers'] = 1
+    # embedding_model_config['gnn_layers'] = 0
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    #
+    # embedding_model_config['num_heads'] = 1
+    # embedding_model_config['num_layers'] = 1
+    # embedding_model_config['gnn_layers'] = 12
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    # embedding_model_config['num_heads'] = 1
+    # embedding_model_config['num_layers'] = 1
+    # embedding_model_config['gnn_layers'] = 4
+    # embedding_model_config['dropout'] = 0
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    # embedding_model_config['num_heads'] = 1
+    # embedding_model_config['num_layers'] = 1
+    # embedding_model_config['gnn_layers'] = 4
+    # embedding_model_config['dropout'] = 0.2
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    # embedding_model_config['num_heads'] = 2
+    # embedding_model_config['num_layers'] = 2
+    # embedding_model_config['gnn_layers'] = 4
+    # embedding_model_config['dropout'] = 0.2
+    #
+    # experiment = ExperimentRunner(exp_config=exp_config, embedding_model_config=embedding_model_config)
+    # experiment.run()
+    #
+    #
+    #

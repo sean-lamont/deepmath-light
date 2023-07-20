@@ -52,4 +52,6 @@ def sexpression_to_graph(sexpression_txt: Text):
     for k, v in node_to_tok_.items():
         tok_list[k] = v
 
+    # todo add attention_edge and depth here as an option
+
     return {'tokens': tok_list, 'edge_index': [senders, receivers], 'edge_attr': edge_attr}

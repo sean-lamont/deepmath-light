@@ -47,7 +47,7 @@ class GraphTransformer(nn.Module):
         if self.small_inner:
             d_model = d_model // 2
             # self.expand_proj = nn.Sequential(nn.Linear(d_model, d_model * 2), nn.GELU())
-            self.expand_proj = nn.Sequential(nn.Dropout(dropout),
+        self.expand_proj = nn.Sequential(nn.Dropout(dropout),
                                              nn.Linear(d_model, d_model * 4),
                                              nn.ReLU(),
                                              nn.Linear(d_model * 4, d_model * 8),
@@ -205,8 +205,8 @@ class GraphTransformer(nn.Module):
             return_attn=return_attn
         )
 
-        if self.small_inner:
-            output = self.expand_proj(output)
+        # if self.small_inner:
+        output = self.expand_proj(output)
 
 
         if self.use_global_pool:

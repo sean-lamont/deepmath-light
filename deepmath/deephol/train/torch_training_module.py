@@ -1,6 +1,9 @@
 """
+
 PyTorch Lightning module for training HOList models from labelled data
+
 """
+
 import logging
 import warnings
 import einops
@@ -11,7 +14,7 @@ import torch
 
 
 def auroc(pos, neg):
-    return torch.sum(torch.log(1 + torch.exp(-1 * (pos - neg))))
+    return torch.mean(torch.log(1 + torch.exp(-1 * (pos - neg))))
 
 
 ce_loss = torch.nn.CrossEntropyLoss()

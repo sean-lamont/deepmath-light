@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import division
-# Import Type Annotations
 from __future__ import print_function
 
 import logging
 import sys
 
 """"
+
 DeepHOL non-distributed prover.
+
 """
 
 from deepmath.deephol import prover_flags
