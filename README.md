@@ -1,4 +1,6 @@
-# Deepmath Light
+# Deepmath Light (Deprecated)
+
+## Moved to parent BAIT project
 
 This repository is intended to be a lightweight version of the original deepmath/deephol 
 source. The original project has several dependencies which can make it difficult to set up the 
